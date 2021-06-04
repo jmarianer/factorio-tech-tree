@@ -1,26 +1,43 @@
-import re
+import base64
+import io
 import json
 import lupa
+import re
+from PIL import Image, ImageOps, ImageColor
 from os import path
 
 BASE='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
 lua = lupa.LuaRuntime(unpack_returned_tuples=True)
 
 
-class LuaTableJsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if lupa.lua_type(obj) == 'table':
-            if all(isinstance(i, int) for i in obj.keys()):
-                return list(obj.values())
-            else:
-                return {str(k): v for k, v in obj.items()}
-
-        return json.JSONEncoder.default(self, obj)
+def lua_table_to_python(obj):
+    if lupa.lua_type(obj) == 'table':
+        if all(isinstance(i, int) for i in obj.keys()):
+            return [lua_table_to_python(v) for v in obj.values()]
+        else:
+            return {str(k): lua_table_to_python(v) for k, v in obj.items()}
+    elif lupa.lua_type(obj) is not None:
+        return lupa.lua_type(obj)
+    else:
+        return obj
 
 
 def slurp(game_mod, filename):
     with open(f'{BASE}/{game_mod}/{filename}') as x:
         return x.read(), f'__{game_mod}__/{filename}'
+
+
+def get_binary(path):
+    match = re.match('__(.*)__/(.*)', path)
+    if not match:
+        return None
+
+    game_mod = match[1]
+    filename = match[2]
+
+    with open(f'{BASE}/{game_mod}/{filename}', 'rb') as x:
+        return x.read()
+
 
 def load(game_mod, module):
     return slurp(game_mod, f'{module.replace(".", "/")}.lua')
@@ -56,6 +73,77 @@ def global_searcher(path):
 
     return ret
 
+
+def get_icon(icon_specs):
+    icon_size = icon_specs[0]['icon_size']
+    icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
+    for icon_spec in icon_specs:
+        layer_original_size = icon_spec.get('icon_size', icon_size)
+        layer_scaled_size = int(layer_original_size * icon_spec.get('scale', 1))
+
+        layer = Image \
+                .open(io.BytesIO(get_binary(icon_spec['icon']))) \
+                .crop([0, 0, layer_original_size, layer_original_size]) \
+                .convert('RGBA') \
+                .resize((layer_scaled_size, layer_scaled_size))
+
+        if 'tint' in icon_spec:
+            tint = icon_spec['tint']
+            layer_grayscale = ImageOps.grayscale(layer).getdata()
+            layer_alpha = layer.getdata(3)
+
+            layer_new_data = map(
+                    lambda grayscale, alpha: (
+                        int(grayscale * tint['r']),
+                        int(grayscale * tint['g']),
+                        int(grayscale * tint['b']),
+                        int(alpha * tint['a'])),
+                    layer_grayscale, layer_alpha)
+            layer.putdata(list(layer_new_data))
+
+
+
+        shift_x, shift_y = icon_spec.get('shift', (0, 0))
+        default_offset = (icon_size - layer_scaled_size) / 2
+        offset = tuple(map(int, (default_offset + shift_x, default_offset + shift_y)))
+
+        icon.alpha_composite(layer, offset)
+
+    return icon
+
+
+def get_icon_specs(a_dict):
+    return a_dict['icons'] if 'icons' in a_dict else [{
+        'icon': a_dict['icon'],
+        'icon_size': a_dict['icon_size'],
+        }]
+
+
+def get_item_icon(item_name):
+    return get_icon(get_icon_specs(data['item'][item_name]))
+
+
+def get_tech_icon(tech_name):
+    return get_icon(get_icon_specs(data['technology'][tech_name]))
+
+
+def get_recipe_icon(recipe_name):
+    recipe = data['recipe'][recipe_name]
+    try:
+        spec = get_icon_specs(recipe)
+    except KeyError:
+        main_item_name = recipe.get('main_product', recipe['results'][0]['name'])
+        item = data['item'][main_item_name]
+        spec = get_icon_specs(item)
+
+    return get_icon(spec)
+
+
+def image_to_data_url(image):
+    stream = io.BytesIO()
+    image.save(stream, 'png')
+    encoded = base64.b64encode(stream.getvalue()).decode('ascii')
+    return 'data:image/jpeg;base64,' + encoded
 
 lua.eval('table.insert(package.searchers, 1, ...)', global_searcher)
 lua.globals().package.path = f'{BASE}/core/lualib/?.lua;{BASE}/base/?.lua'
@@ -136,9 +224,30 @@ lua.execute('''
 ''')
 
 lua.execute(slurp('core', 'lualib/dataloader.lua')[0])
+# TODO automate this. Need an "if exists" thing.
+# for f in ['data', 'data-updates', 'data-final-fixes']:
+#     lua.eval(f'require("__core__/{f}")')
+#     lua.eval(f'require("__base__/{f}")')
+
+# The stupid way:
 lua.eval('require("__core__/data")')
 lua.eval('require("__base__/data")')
+lua.eval('require("__base__/data-updates")')
 
-data = lua.globals().data.raw
+data = lua_table_to_python(lua.globals().data.raw)
+# Dump All the Things if necessary
+# print(json.dumps(data, sort_keys=True, indent=4))
 
-print(json.dumps(data, cls=LuaTableJsonEncoder, sort_keys=True, indent=4))
+# Test 1: Something to do with prerequisites
+tech = data['technology']
+prereqs_available = set()
+while True:
+    new_available = {
+            k
+            for k, v in tech.items()
+            if set(v.get('prerequisites', [])).issubset(prereqs_available)}
+    if len(new_available - prereqs_available) == 0:
+        break
+    for tech_name in new_available - prereqs_available:
+        print(f'<img src="{image_to_data_url(get_tech_icon(tech_name))}">')
+    prereqs_available.update(new_available)
