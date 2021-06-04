@@ -225,14 +225,12 @@ lua.execute('''
 
 lua.execute(slurp('core', 'lualib/dataloader.lua')[0])
 # TODO automate this. Need an "if exists" thing.
-# for f in ['data', 'data-updates', 'data-final-fixes']:
-#     lua.eval(f'require("__core__/{f}")')
-#     lua.eval(f'require("__base__/{f}")')
-
-# The stupid way:
-lua.eval('require("__core__/data")')
-lua.eval('require("__base__/data")')
-lua.eval('require("__base__/data-updates")')
+for f in ['data', 'data-updates', 'data-final-fixes']:
+    for m in ['core', 'base']:
+        try:
+            lua.eval(f'require("__{m}__/{f}")')
+        except FileNotFoundError:
+            pass
 
 data = lua_table_to_python(lua.globals().data.raw)
 # Dump All the Things if necessary
