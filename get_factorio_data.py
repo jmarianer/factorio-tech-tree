@@ -3,6 +3,7 @@ import json
 import lupa
 import re
 
+from defines import defines
 from icon import get_factorio_icon
 from mod_reader import ModReader
 from property_tree import read_tree_file
@@ -150,6 +151,7 @@ def populate_mod_list():
 lua.execute('serpent = require("serpent")')
 lua.globals().settings = read_tree_file(f'{MODS_DIR}/mod-settings.dat')
 lua.globals().package.path = f'{BASE_DIR}/base/?.lua;{BASE_DIR}/core/lualib/?.lua'
+lua.globals().defines = python_to_lua_table(lua, defines)
 lua.execute('table.insert(package.searchers, 4, ...)', lua_package_searcher)
 lua.execute('''
     require "util"
@@ -164,84 +166,15 @@ lua.execute('''
         end
         return count
     end
-
-    defines = {}
-    defines.alert_type = {}
-    defines.behavior_result = {}
-    defines.build_check_type = {}
-    defines.chain_signal_state = {}
-    defines.chunk_generated_status = {}
-    defines.circuit_condition_index = {}
-    defines.circuit_connector_id = {}
-    defines.command = {}
-    defines.compound_command = {}
-    defines.control_behavior = {}
-    defines.control_behavior.inserter = {}
-    defines.control_behavior.inserter.circuit_mode_of_operation = {}
-    defines.control_behavior.inserter.hand_read_mode = {}
-    defines.control_behavior.logistics_container = {}
-    defines.control_behavior.logistics_container.circuit_mode_of_operation = {}
-    defines.control_behavior.lamp = {}
-    defines.control_behavior.lamp.circuit_mode_of_operation = {}
-    defines.control_behavior.mining_drill = {}
-    defines.control_behavior.mining_drill.resource_read_mode = {}
-    defines.control_behavior.transport_belt = {}
-    defines.control_behavior.transport_belt.content_read_mode = {}
-    defines.control_behavior.type = {}
-    defines.controllers = {}
-    defines.deconstruction_item = {}
-    defines.deconstruction_item.entity_filter_mode = {}
-    defines.deconstruction_item.tile_filter_mode = {}
-    defines.deconstruction_item.tile_selection_mode = {}
-    defines.difficulty = {}
-    defines.difficulty_settings = {}
-    defines.difficulty_settings.recipe_difficulty = {}
-    defines.difficulty_settings.technology_difficulty = {}
-    defines.difficulty_settings.recipe_difficulty.normal = 1
-    defines.difficulty_settings.technology_difficulty.normal = 1
-    defines.distraction = {}
-    defines.direction = {}
-    defines.direction.north = 1
-    defines.direction.east = 2
-    defines.direction.south = 3
-    defines.direction.west = 4
-    defines.direction.northeast = 5
-    defines.direction.southeast = 6
-    defines.direction.southwest = 7
-    defines.direction.northwest = 8
-    defines.entity_status = {}
-    defines.events = {}
-    defines.flow_precision_index = {}
-    defines.group_state = {}
-    defines.gui_type = {}
-    defines.input_action = {}
-    defines.inventory = {}
-    defines.logistic_member_index = {}
-    defines.logistic_mode = {}
-    defines.mouse_button_type = {}
-    defines.rail_connection_direction = {}
-    defines.rail_direction = {}
-    defines.render_mode	= {}
-    defines.rich_text_setting = {}
-    defines.riding = {}
-    defines.riding.acceleration = {}
-    defines.riding.direction = {}
-    defines.shooting = {}
-    defines.signal_state = {}
-    defines.train_state	 = {}
-    defines.transport_line = {}
-    defines.wire_connection_id = {}
-    defines.wire_type = {}
 ''')
 
 populate_mod_list()
+print(mod_list)
 lua.globals().mods = lua.table(**mod_versions)
 
 lua.execute(reader.get_text('__core__/lualib/dataloader.lua'))
-
 for f in ['data', 'data-updates', 'data-final-fixes']:
     for m in mod_list:
-        print(m, f)
         try:
             text = reader.get_text(f'__{m}__/{f}.lua')
         except FileNotFoundError:
@@ -256,7 +189,6 @@ for f in ['data', 'data-updates', 'data-final-fixes']:
         lua.execute(text)
 
 data = lua_table_to_python(lua.globals().data.raw)
-exit()
 # Dump All the Things if necessary
 # print(json.dumps(data, sort_keys=True, indent=4))
 

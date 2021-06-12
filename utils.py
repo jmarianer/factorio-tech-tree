@@ -15,6 +15,15 @@ def lua_table_to_python(obj):
         return obj
 
 
+def python_to_lua_table(lua, obj):
+    if isinstance(obj, dict):
+        return lua.table(**{
+            k: python_to_lua_table(lua, v)
+            for k, v in obj.items()})
+    else:
+        return obj
+
+
 def image_to_data_url(image):
     stream = io.BytesIO()
     image.save(stream, 'png')
