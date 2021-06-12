@@ -1,30 +1,18 @@
-import base64
 import io
 import json
 import lupa
 import re
-import struct
-from collections import defaultdict
 from glob import glob
 from PIL import Image, ImageOps, ImageColor
 from os import path
 from zipfile import ZipFile
 
+from property_tree import read_tree_file
+from utils import *
+
 BASE='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
 MODS='/Users/joeym/Library/Application Support/Factorio/mods'
 lua = lupa.LuaRuntime(unpack_returned_tuples=True)
-
-
-def lua_table_to_python(obj):
-    if lupa.lua_type(obj) == 'table':
-        if all(isinstance(i, int) for i in obj.keys()):
-            return [lua_table_to_python(v) for v in obj.values()]
-        else:
-            return {str(k): lua_table_to_python(v) for k, v in obj.items()}
-    elif lupa.lua_type(obj) is not None:
-        return lupa.lua_type(obj)
-    else:
-        return obj
 
 
 def get_text(a_path):
@@ -123,8 +111,6 @@ def get_icon(icon_specs):
                     layer_grayscale, layer_alpha)
             layer.putdata(list(layer_new_data))
 
-
-
         shift_x, shift_y = icon_spec.get('shift', (0, 0))
         default_offset = (icon_size - layer_scaled_size) / 2
         offset = tuple(map(int, (default_offset + shift_x, default_offset + shift_y)))
@@ -161,48 +147,11 @@ def get_recipe_icon(recipe_name):
     return get_icon(spec)
 
 
-def image_to_data_url(image):
-    stream = io.BytesIO()
-    image.save(stream, 'png')
-    encoded = base64.b64encode(stream.getvalue()).decode('ascii')
-    return 'data:image/jpeg;base64,' + encoded
-
-
-def read_tree(file):
-    tree_type = file.read(2)[0]
-    if tree_type == 5:
-        tree = defaultdict(lambda: None)
-        count, = struct.unpack('I', file.read(4))
-        for _ in range(count):
-            # Not handling empty keys or len>255
-            key_len = file.read(2)[1]
-            key = file.read(key_len).decode('ascii')
-            value = read_tree(file)
-            tree[key] = value
-        return tree
-    elif tree_type == 1:
-        return file.read(1)[0] == 1
-    elif tree_type == 2:
-        value, = struct.unpack('d', file.read(8))
-        return value
-    elif tree_type == 3:
-        # Not handling empty strings or len>255
-        value_len = file.read(2)[1]
-        return file.read(value_len).decode('ascii')
-    else:
-        print(tree_type)
-        exit()
-
-
-with open(f'{MODS}/mod-settings.dat', 'rb') as file:
-    # Skip header
-    file.read(9).hex()
-    lua.globals().settings = read_tree(file)
-
 
 lua.execute('table.insert(package.searchers, 4, ...)', global_searcher)
 lua.execute('serpent = require("serpent")')
 lua.globals().package.path = f'{BASE}/base/?.lua;{BASE}/core/lualib/?.lua'
+lua.globals().settings = read_tree_file(f'{MODS}/mod-settings.dat')
 
 
 # TODO make "defines" a Python dict instead
