@@ -8,31 +8,39 @@ from mod_reader import ModReader
 from property_tree import read_tree_file
 from utils import *
 
+
+# GLOBALS
 BASE='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
 MODS='/Users/joeym/Library/Application Support/Factorio/mods'
 lua = lupa.LuaRuntime(unpack_returned_tuples=True)
 reader = ModReader(BASE, MODS)
 
 
-# TODO rename function and argument. Also go over and comment
-def global_searcher(path):
-    if not '/' in path:
-        path = f'{path.replace(".", "/")}'
-    if not path.endswith('.lua'):
-        path += '.lua'
+def lua_package_searcher(require_argument):
+    # Lua allows "require foo.bar.baz", "require foo/bar/baz" and "require
+    # foo/bar/baz.lua". Convert the former two to the latter, canonical form.
+    if not '/' in require_argument:
+        require_argument = require_argument.replace('.', '/')
+    if not require_argument.endswith('.lua'):
+        require_argument += '.lua'
 
-    if path.startswith('__'):
-        paths = [path]
+    # Paths starting '__modname__' are absolute. Paths that don't should be
+    # treated relative to either the current module or the root directory of
+    # the current game mod.
+    if require_argument.startswith('__'):
+        paths = [require_argument]
     else:
+        # The global dir_stack table has the name of the current module's
+        # directory in position 1, always with a trailing slash.
         if not lua.globals().dir_stack:
             return
-        # TODO always trailing slash
-        module = re.match('(__.*__/).*', lua.globals().dir_stack[1] + '/')[1]
-        paths = [lua.globals().dir_stack[1] + '/' + path, module + path]
+        current_module = lua.globals().dir_stack[1]
+        game_mod_root = re.match('(__.*__/).*', current_module)[1]
+        paths = [current_module + require_argument, game_mod_root + require_argument]
 
     for path in paths:
         path_elements = path.split('/')
-        new_entry = '/'.join(path_elements[0:-1])
+        new_dir_stack_entry = '/'.join(path_elements[0:-1]) + '/'
 
         try:
             contents = reader.get_text(path)
@@ -40,15 +48,15 @@ def global_searcher(path):
             continue
 
         return lua.eval('''
-            (function(stack_entry, contents, filename)
+            (function(new_dir_stack_entry, contents, filename)
                 return function ()
-                    table.insert(dir_stack, 1, stack_entry)
+                    table.insert(dir_stack, 1, new_dir_stack_entry)
                     ret = load(contents, filename)()
                     table.remove(dir_stack, 1)
                     return ret
                 end
             end)(...)''',
-            new_entry,
+            new_dir_stack_entry,
             contents,
             path)
 
@@ -81,7 +89,7 @@ def get_recipe_icon(recipe_name):
 
 
 
-lua.execute('table.insert(package.searchers, 4, ...)', global_searcher)
+lua.execute('table.insert(package.searchers, 4, ...)', lua_package_searcher)
 lua.execute('serpent = require("serpent")')
 lua.globals().package.path = f'{BASE}/base/?.lua;{BASE}/core/lualib/?.lua'
 lua.globals().settings = read_tree_file(f'{MODS}/mod-settings.dat')
@@ -203,7 +211,7 @@ for f in ['data', 'data-updates', 'data-final-fixes']:
             continue
 
         lua.execute(f'''
-            dir_stack = {{"__{m}__"}}
+            dir_stack = {{"__{m}__/"}}
             for k, v in pairs(package.loaded) do
                 package.loaded[k] = false
             end
