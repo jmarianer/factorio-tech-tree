@@ -169,19 +169,20 @@ lua.execute('''
 ''')
 
 populate_mod_list()
-print(mod_list)
 lua.globals().mods = lua.table(**mod_versions)
 
 lua.execute(reader.get_text('__core__/lualib/dataloader.lua'))
-for f in ['data', 'data-updates', 'data-final-fixes']:
-    for m in mod_list:
+for lua_source_file in ['data', 'data-updates', 'data-final-fixes']:
+    for mod in mod_list:
         try:
-            text = reader.get_text(f'__{m}__/{f}.lua')
+            text = reader.get_text(f'__{mod}__/{lua_source_file}.lua')
         except FileNotFoundError:
             continue
 
+        # Reset package.loaded in between every module because some modules use
+        # packages with identical names.
         lua.execute(f'''
-            dir_stack = {{"__{m}__/"}}
+            dir_stack = {{"__{mod}__/"}}
             for k, v in pairs(package.loaded) do
                 package.loaded[k] = false
             end
@@ -192,7 +193,8 @@ data = lua_table_to_python(lua.globals().data.raw)
 # Dump All the Things if necessary
 # print(json.dumps(data, sort_keys=True, indent=4))
 
-# Test 1: Something to do with prerequisites
+
+# HTML with embedded images for all techs in dependency order
 tech = data['technology']
 prereqs_available = set()
 while True:
@@ -203,5 +205,6 @@ while True:
     if len(new_available - prereqs_available) == 0:
         break
     for tech_name in new_available - prereqs_available:
+        #print(tech_name, data['technology'][tech_name].get('localised_name', f'technology-name.{tech_name}'))
         print(f'<img style="width:32; height:32" src="{image_to_data_url(get_tech_icon(tech_name))}" title="{tech_name}">')
     prereqs_available.update(new_available)
