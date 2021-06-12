@@ -2,6 +2,7 @@ import base64
 import io
 import lupa
 
+
 def lua_table_to_python(obj):
     if lupa.lua_type(obj) == 'table':
         if all(isinstance(i, int) for i in obj.keys()):
