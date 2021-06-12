@@ -2,47 +2,16 @@ import io
 import json
 import lupa
 import re
-from glob import glob
-from PIL import Image, ImageOps, ImageColor
-from os import path
-from zipfile import ZipFile
 
+from icon import get_factorio_icon
+from mod_reader import ModReader
 from property_tree import read_tree_file
 from utils import *
 
 BASE='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
 MODS='/Users/joeym/Library/Application Support/Factorio/mods'
 lua = lupa.LuaRuntime(unpack_returned_tuples=True)
-
-
-def get_text(a_path):
-    return get_binary(a_path).decode('utf-8')
-
-
-def get_binary(a_path):
-    match = re.match('__(.*)__/(.*)', a_path)
-    if not match:
-        return None
-
-    game_mod = match[1]
-    filename = match[2]
-
-    if game_mod in ['base', 'core']:
-        with open(f'{BASE}/{game_mod}/{filename}', 'rb') as x:
-            return x.read()
-
-    dir_or_zip = glob(f'{MODS}/{game_mod}*')[-1]
-    if path.isdir(dir_or_zip):
-        with open(f'{dir_or_zip}/{filename}', 'rb') as x:
-            return x.read()
-
-    zipfile = ZipFile(dir_or_zip)
-    zipped_names = [n for n in zipfile.namelist() if n.endswith('/' + filename)]
-    if len(zipped_names) != 1:
-        raise FileNotFoundError
-
-    with zipfile.open(zipped_names[0], 'r') as x:
-        return x.read()
+reader = ModReader(BASE, MODS)
 
 
 # TODO rename function and argument. Also go over and comment
@@ -66,7 +35,7 @@ def global_searcher(path):
         new_entry = '/'.join(path_elements[0:-1])
 
         try:
-            contents = get_text(path)
+            contents = reader.get_text(path)
         except FileNotFoundError:
             continue
 
@@ -84,42 +53,6 @@ def global_searcher(path):
             path)
 
 
-def get_icon(icon_specs):
-    icon_size = icon_specs[0]['icon_size']
-    icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
-    for icon_spec in icon_specs:
-        layer_original_size = icon_spec.get('icon_size', icon_size)
-        layer_scaled_size = int(layer_original_size * icon_spec.get('scale', 1))
-
-        layer = Image \
-                .open(io.BytesIO(get_binary(icon_spec['icon']))) \
-                .crop([0, 0, layer_original_size, layer_original_size]) \
-                .convert('RGBA') \
-                .resize((layer_scaled_size, layer_scaled_size))
-
-        if 'tint' in icon_spec:
-            tint = icon_spec['tint']
-            layer_grayscale = ImageOps.grayscale(layer).getdata()
-            layer_alpha = layer.getdata(3)
-
-            layer_new_data = map(
-                    lambda grayscale, alpha: (
-                        int(grayscale * tint['r']),
-                        int(grayscale * tint['g']),
-                        int(grayscale * tint['b']),
-                        int(alpha * tint.get('a', 1))),
-                    layer_grayscale, layer_alpha)
-            layer.putdata(list(layer_new_data))
-
-        shift_x, shift_y = icon_spec.get('shift', (0, 0))
-        default_offset = (icon_size - layer_scaled_size) / 2
-        offset = tuple(map(int, (default_offset + shift_x, default_offset + shift_y)))
-
-        icon.alpha_composite(layer, offset)
-
-    return icon
-
-
 def get_icon_specs(a_dict):
     return a_dict['icons'] if 'icons' in a_dict else [{
         'icon': a_dict['icon'],
@@ -128,11 +61,11 @@ def get_icon_specs(a_dict):
 
 
 def get_item_icon(item_name):
-    return get_icon(get_icon_specs(data['item'][item_name]))
+    return get_factorio_icon(reader, get_icon_specs(data['item'][item_name]))
 
 
 def get_tech_icon(tech_name):
-    return get_icon(get_icon_specs(data['technology'][tech_name]))
+    return get_factorio_icon(reader, get_icon_specs(data['technology'][tech_name]))
 
 
 def get_recipe_icon(recipe_name):
@@ -144,7 +77,7 @@ def get_recipe_icon(recipe_name):
         item = data['item'][main_item_name]
         spec = get_icon_specs(item)
 
-    return get_icon(spec)
+    return get_factorio_icon(reader, spec)
 
 
 
@@ -239,13 +172,13 @@ lua.execute('''
     end
 ''')
 
-lua.execute(get_text('__core__/lualib/dataloader.lua'))
+lua.execute(reader.get_text('__core__/lualib/dataloader.lua'))
 #mod_list = ['Krastorio2']
 mod_list = ['Krastorio2', 'space-exploration', 'space-exploration-postprocess']
 
 for m in mod_list:
     deps = [d.split(' ')[0]
-            for d in json.loads(get_text(f'__{m}__/info.json'))['dependencies']
+            for d in json.loads(reader.get_text(f'__{m}__/info.json'))['dependencies']
             if d[0] not in "!(?)~"]
     for d in deps:
         if d not in mod_list:
@@ -265,7 +198,7 @@ lua.execute('print(mods.base)')
 for f in ['data', 'data-updates', 'data-final-fixes']:
     for m in mod_list:
         try:
-            text = get_text(f'__{m}__/{f}.lua')
+            text = reader.get_text(f'__{m}__/{f}.lua')
         except FileNotFoundError:
             continue
 
@@ -292,5 +225,5 @@ while True:
     if len(new_available - prereqs_available) == 0:
         break
     for tech_name in new_available - prereqs_available:
-        print(f'<img src="{image_to_data_url(get_tech_icon(tech_name))}" title="{tech_name}">')
+        print(f'<img style="width:32; height:32" src="{image_to_data_url(get_tech_icon(tech_name))}" title="{tech_name}">')
     prereqs_available.update(new_available)
