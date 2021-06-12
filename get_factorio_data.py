@@ -1,3 +1,4 @@
+import configparser
 import io
 import json
 import lupa
@@ -22,6 +23,7 @@ lua = lupa.LuaRuntime(unpack_returned_tuples=True)
 reader = ModReader(BASE_DIR, MODS_DIR)
 mod_list = []
 mod_versions = {}
+locale = configparser.ConfigParser()
 
 
 # FUNCTIONS
@@ -147,6 +149,26 @@ def populate_mod_list():
         mod_list.extend(new_mods)
     
 
+def localize(section, value):
+    def get_localized_from_group(match):
+        if match[1] == 'ENTITY':
+            return localize('entity-name', match[2])
+        elif match[1] == 'ITEM':
+            return localize('item-name', match[2])
+        else:
+            return match[0]
+
+    if value in locale[section]:
+        localized = locale[section][value]
+    else:
+        match = re.match('(.*)-(\d+)$', value)
+        if match:
+            localized = locale[section].get(match[1], '???') + ' ' + match[2]
+        else:
+            localized = '???'
+    return re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized)
+
+
 # MAIN
 lua.execute('serpent = require("serpent")')
 lua.globals().settings = read_tree_file(f'{MODS_DIR}/mod-settings.dat')
@@ -170,6 +192,12 @@ lua.execute('''
 
 populate_mod_list()
 lua.globals().mods = lua.table(**mod_versions)
+
+
+for mod in mod_list:
+    for localefile in reader.glob(f'__{mod}__/locale/en/*.cfg'):
+        locale.read_string('[EMPTYSECTION]\n' + reader.get_text(localefile))
+
 
 lua.execute(reader.get_text('__core__/lualib/dataloader.lua'))
 for lua_source_file in ['data', 'data-updates', 'data-final-fixes']:
@@ -205,6 +233,7 @@ while True:
     if len(new_available - prereqs_available) == 0:
         break
     for tech_name in new_available - prereqs_available:
-        #print(tech_name, data['technology'][tech_name].get('localised_name', f'technology-name.{tech_name}'))
-        print(f'<img style="width:32; height:32" src="{image_to_data_url(get_tech_icon(tech_name))}" title="{tech_name}">')
+        image = image_to_data_url(get_tech_icon(tech_name))
+        name =  localize('technology-name', tech_name)
+        print(f'<img style="width:32; height:32" src="{image}" title="{name}">')
     prereqs_available.update(new_available)

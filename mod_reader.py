@@ -47,7 +47,7 @@ class ModReader:
         filename = match[2]
 
         if game_mod in ['base', 'core']:
-            return [f'__{game_mod}__/' + f.removeprefix(f'{self.base_dir}/')
+            return [f'__{game_mod}__/' + f.removeprefix(f'{self.base_dir}/{game_mod}/')
                     for f in glob(f'{self.base_dir}/{game_mod}/{filename}')]
 
         dir_or_zip = glob(f'{self.mods_dir}/{game_mod}*')[-1]
