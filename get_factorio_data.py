@@ -9,13 +9,21 @@ from property_tree import read_tree_file
 from utils import *
 
 
+# CONFIG
+SUPPORT='/Users/joeym/Library/Application Support'
+BASE_DIR=f'{SUPPORT}/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
+MODS_DIR=f'{SUPPORT}/Factorio/mods'
+MODS=['Krastorio2', 'space-exploration', 'space-exploration-postprocess']
+
+
 # GLOBALS
-BASE='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
-MODS='/Users/joeym/Library/Application Support/Factorio/mods'
 lua = lupa.LuaRuntime(unpack_returned_tuples=True)
-reader = ModReader(BASE, MODS)
+reader = ModReader(BASE_DIR, MODS_DIR)
+mod_list = []
+mod_versions = {}
 
 
+# FUNCTIONS
 def lua_package_searcher(require_argument):
     # Lua allows "require foo.bar.baz", "require foo/bar/baz" and "require
     # foo/bar/baz.lua". Convert the former two to the latter, canonical form.
@@ -88,18 +96,73 @@ def get_recipe_icon(recipe_name):
     return get_factorio_icon(reader, spec)
 
 
+def populate_mod_list():
+    global mod_list, mod_versions
+    mod_list = []
 
-lua.execute('table.insert(package.searchers, 4, ...)', lua_package_searcher)
+    mods = set(MODS)
+    mods.update({'base', 'core'})
+
+    # Get all mods including dependencies
+    load_order_constraints = {}
+    while True:
+        new_mods = mods - mod_versions.keys()
+        if len(new_mods) == 0:
+            break
+
+        for mod in new_mods:
+            info_json = json.loads(reader.get_text(f'__{mod}__/info.json'))
+            mod_versions[mod] = info_json.get('version', None)
+            # ! for incompatibility
+            # ? for an optional dependency
+            # (?) for a hidden optional dependency
+            # ~ for a dependency that does not affect load order
+            # or no prefix for a hard requirement for the other mod.
+
+            # Get all required dependencies, and also all optional dependencies that affect load order
+            required_deps = []
+            load_order_constraints[mod] = []
+            for dependency_spec in info_json['dependencies']:
+                if dependency_spec[0] not in "!(?)~":
+                    dependency_spec = '= ' + dependency_spec
+                prefix, dep = dependency_spec.split(' ')[0:2]
+                if prefix in {'=', '~'}:
+                    required_deps.append(dep)
+                if prefix in {'=', '?', '(?)'}:
+                    load_order_constraints[mod].append(dep)
+
+            mods.update(required_deps)
+
+    # Now order them
+    mod_list = ['core', 'base']
+    while True:
+        new_mods = {
+                mod
+                for mod in mods
+                if set(load_order_constraints[mod]).intersection(mods).issubset(mod_list)}
+        new_mods -= set(mod_list)
+        if len(new_mods) == 0:
+            break
+        mod_list.extend(new_mods)
+    
+
+# MAIN
 lua.execute('serpent = require("serpent")')
-lua.globals().package.path = f'{BASE}/base/?.lua;{BASE}/core/lualib/?.lua'
-lua.globals().settings = read_tree_file(f'{MODS}/mod-settings.dat')
-
-
-# TODO make "defines" a Python dict instead
+lua.globals().settings = read_tree_file(f'{MODS_DIR}/mod-settings.dat')
+lua.globals().package.path = f'{BASE_DIR}/base/?.lua;{BASE_DIR}/core/lualib/?.lua'
+lua.execute('table.insert(package.searchers, 4, ...)', lua_package_searcher)
 lua.execute('''
     require "util"
 
     function log(...)
+    end
+
+    function table_size(t)
+        local count = 0
+        for k,v in pairs(t) do
+            count = count + 1
+        end
+        return count
     end
 
     defines = {}
@@ -169,42 +232,16 @@ lua.execute('''
     defines.transport_line = {}
     defines.wire_connection_id = {}
     defines.wire_type = {}
-
-    mods = {}
-    function table_size(t)
-        local count = 0
-        for k,v in pairs(t) do
-            count = count + 1
-        end
-        return count
-    end
 ''')
 
+populate_mod_list()
+lua.globals().mods = lua.table(**mod_versions)
+
 lua.execute(reader.get_text('__core__/lualib/dataloader.lua'))
-#mod_list = ['Krastorio2']
-mod_list = ['Krastorio2', 'space-exploration', 'space-exploration-postprocess']
 
-for m in mod_list:
-    deps = [d.split(' ')[0]
-            for d in json.loads(reader.get_text(f'__{m}__/info.json'))['dependencies']
-            if d[0] not in "!(?)~"]
-    for d in deps:
-        if d not in mod_list:
-            if d not in ['base', 'core']:
-                mod_list.append(d)
-
-
-mod_list.extend(['base', 'core'])
-mod_list.reverse()
-print(mod_list)
-
-for m in mod_list:
-    # TODO fix this
-    lua.execute(f'mods["{m}"] = "1.2.3"')
-
-lua.execute('print(mods.base)')
 for f in ['data', 'data-updates', 'data-final-fixes']:
     for m in mod_list:
+        print(m, f)
         try:
             text = reader.get_text(f'__{m}__/{f}.lua')
         except FileNotFoundError:
@@ -219,6 +256,7 @@ for f in ['data', 'data-updates', 'data-final-fixes']:
         lua.execute(text)
 
 data = lua_table_to_python(lua.globals().data.raw)
+exit()
 # Dump All the Things if necessary
 # print(json.dumps(data, sort_keys=True, indent=4))
 
