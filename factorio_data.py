@@ -163,7 +163,31 @@ class FactorioData:
                 self.locale.read_string('[EMPTYSECTION]\n' + self.reader.get_text(localefile))
 
     def get_item_icon(self, item_name):
-        return get_factorio_icon(self.reader, get_icon_specs(self.raw['item'][item_name]))
+        item_types = [
+                'ammo',
+                'armor',
+                'blueprint',
+                'blueprint-book',
+                'capsule',
+                'copy-paste-tool',
+                'deconstruction-item',
+                'gun',
+                'item',
+                'item-with-entity-data',
+                'item-with-inventory',
+                'item-with-label',
+                'item-with-tags',
+                'module',
+                'rail-planner',
+                'repair-tool',
+                'selection-tool',
+                'spidertron-remote',
+                'tool',
+                'upgrade-item',
+                ]
+        for item_type in item_types:
+            if item_name in self.raw[item_type]:
+                return get_factorio_icon(self.reader, get_icon_specs(self.raw[item_type][item_name]))
 
     def get_tech_icon(self, tech_name):
         return get_factorio_icon(self.reader, get_icon_specs(self.raw['technology'][tech_name]))

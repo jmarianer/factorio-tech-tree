@@ -11,7 +11,9 @@ MODS=['Krastorio2', 'space-exploration', 'space-exploration-postprocess']
 
 
 # MAIN
+print("Getting factorio data...")
 data = FactorioData(BASE_DIR, MODS_DIR, MODS)
+print("Done")
 tech_and_prereqs = {
         k: set(v.get('prerequisites', []))
         for k, v in data.raw['technology'].items()}
@@ -35,29 +37,35 @@ while True:
 
 
 # HTML output, yuck
+items = set()
+
 with open('output/index.html', 'w') as index:
     index.write('''
-        <title>Tech Tree</title>
-        <link rel="stylesheet" href="../tech-tree.css" />
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-        <script src="../tech-tree.js" charset="UTF-8"></script>
-        </head>
-        <body>
-        <div id="tooltip">
-        <div class="tiptitle"></div>
-        <div class="tip1 tipheading">Products:</div>
-        <div class="tip2"></div>
-        <div class="tip3 tipheading">Ingredients:</div>
-        <div class="tip4"></div>
-        </div>
+        <html>
+            <head>
+                <title>Tech Tree</title>
+                <link rel="stylesheet" href="../tech-tree.css" />
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+                <script src="../tech-tree.js" charset="UTF-8"></script>
+            </head>
+            <body>
+                <div id="tooltip">
+                    <div id="tooltiptitle"></div>
+                    <div id="tooltipproductsheading" class="tipheading">Products:</div>
+                    <div id="tooltipproducts"></div>
+                    <div id="tooltipingredientsheading" class="tipheading">Ingredients:</div>
+                    <div id="tooltipingredients"></div>
+                </div>
     ''')
 
     for tech_name in tech_and_prereqs:
         left, top = positions[tech_name]
-        data.get_tech_icon(tech_name).save(f'output/{tech_name}.png')
+        #data.get_tech_icon(tech_name).save(f'output/{tech_name}.png')
         title = data.localize('technology-name', tech_name)
         prereqs = ','.join(tech_and_prereqs[tech_name])
-        index.write(f'<div style="left:{left}px;top:{top}px" id="{tech_name}" class="tech L1" data-prereqs="{prereqs}" data-title="{title}"><img class="pic" src="{tech_name}.png"></div>\n')
+        ingredients = ','.join(map(str, [a for b in data.raw['technology'][tech_name]['unit']['ingredients'] for a in b]))
+        items.update(a[0] for a in data.raw['technology'][tech_name]['unit']['ingredients'])
+        index.write(f'<div style="left:{left}px;top:{top}px" id="{tech_name}" class="tech L1" data-prereqs="{prereqs}" data-title="{title}" data-ingredients="{ingredients}"><img class="pic" src="{tech_name}.png"></div>\n')
 
     for t in tech_and_prereqs:
         for p in tech_and_prereqs[t]:
@@ -77,3 +85,9 @@ with open('output/index.html', 'w') as index:
 
             left = xmid - length / 2
             index.write(f'<div id="{t}_{p}" class="path dark" style="left:{left}px;top:{ymid}px;width:{length}px;transform:rotate({angle}rad)"></div>')
+
+    print(items)
+    for i in items:
+        data.get_item_icon(i).save(f'output/{i}.png')
+        name = data.localize('item-name', i)
+        index.write(f'<div class="item" id="item_{i}" style="background-image:url({i}.png)" data-name="{name}"></div>')
