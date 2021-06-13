@@ -82,6 +82,7 @@ function unblurBack(id) {
 	var tech = $("#"+id);
 	if (!tech.length) return;
 
+  if (tech.hasClass("selected2")) return;
 	tech.addClass("selected2");
 	if (tech.data("prereqs") == "") return;
 	
@@ -97,6 +98,7 @@ function unblurForward(id) {
 	$(".path").each(function(){
 		var pid = $(this).attr("id");
 		if (pid.substring(pid.length - id.length - 1) == "_" + id) {
+      if ($(this).hasClass("selected2")) return;
 			$(this).addClass("selected2");
 			unblurForward(pid.substring(0, pid.length - id.length - 1));
 		}
