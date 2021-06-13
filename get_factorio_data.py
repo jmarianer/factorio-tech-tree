@@ -38,9 +38,9 @@ while True:
 with open('output/index.html', 'w') as index:
     index.write('''
         <title>Tech Tree</title>
-        <link rel="stylesheet" href="https://davemcw.com/factorio/tech-tree/tech-tree.css" />
+        <link rel="stylesheet" href="../tech-tree.css" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-        <script src="https://davemcw.com/factorio/tech-tree/tech-tree.js" charset="UTF-8"></script>
+        <script src="../tech-tree.js" charset="UTF-8"></script>
         </head>
         <body>
         <div id="tooltip">
