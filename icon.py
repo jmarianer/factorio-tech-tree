@@ -37,3 +37,9 @@ def get_factorio_icon(reader, icon_specs):
 
     return icon
 
+
+def get_icon_specs(a_dict):
+    return a_dict['icons'] if 'icons' in a_dict else [{
+        'icon': a_dict['icon'],
+        'icon_size': a_dict['icon_size'],
+        }]
