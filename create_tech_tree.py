@@ -16,7 +16,8 @@ data = FactorioData(BASE_DIR, MODS_DIR, MODS)
 
 
 print('Getting technology tree...')
-Tech = namedtuple('Tuple', ['name', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
+Tech = namedtuple('Tech', ['name', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
+Recipe = namedtuple('Recipe', ['name', 'localized_title'])
 all_techs = {
         name: Tech(
             name=name,
@@ -24,7 +25,10 @@ all_techs = {
             prerequisites=set(v.get('prerequisites', [])),
             ingredients=v['unit']['ingredients'],
             recipes=[
-                effect['recipe']
+                Recipe(
+                    name=effect['recipe'],
+                    localized_title=data.localize('item-name', effect['recipe']),
+                )
                 for effect in v.get('effects', [])
                 if 'recipe' in effect
             ])

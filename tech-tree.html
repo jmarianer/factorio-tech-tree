@@ -14,12 +14,12 @@
       <div class='tech' id='tech_{{ tech.name }}' data-title='{{ tech.localized_title }}'>
         <img class='tech-pic' src='tech_{{ tech.name }}.png'>
         <div class='items'>
-          {% for recipe_name in tech.recipes %}
-          <div class='item' data-title='{{ recipe_name }}'>
+          {% for recipe in tech.recipes %}
+          <div class='item' data-title='{{ recipe.localized_title }}'>
             <img
                 class='item-pic'
-                id='item_{recipe_name}'
-                src='recipe_{{ recipe_name }}.png'>
+                id='item_{{ recipe.name }}'
+                src='recipe_{{ recipe.name }}.png'>
           </div>
           {% endfor %}
         </div>
