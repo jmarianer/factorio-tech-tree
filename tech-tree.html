@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Tech Tree</title>
@@ -6,17 +7,20 @@
     <script src='../tech-tree.js' charset='UTF-8'></script>
   </head>
   <body>
+    <div id='tooltip'></div>
     {% for row in tech_rows %}
     <div class='tech-row'>
       {% for tech in row %}
-      <div class='tech' id='tech_{{ tech.name }}'>
+      <div class='tech' id='tech_{{ tech.name }}' data-title='{{ tech.localized_title }}'>
         <img class='tech-pic' src='tech_{{ tech.name }}.png'>
         <div class='items'>
           {% for recipe_name in tech.recipes %}
-          <img
-              class='item-pic'
-              id='item_{recipe_name}'
-              src='recipe_{{ recipe_name }}.png'>
+          <div class='item' data-title='{{ recipe_name }}'>
+            <img
+                class='item-pic'
+                id='item_{recipe_name}'
+                src='recipe_{{ recipe_name }}.png'>
+          </div>
           {% endfor %}
         </div>
       </div>

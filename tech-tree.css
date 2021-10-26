@@ -4,6 +4,12 @@ body {
   background-color: black;
 }
 
+#tooltip {
+  display: none;
+  position: absolute;
+  background-color: #ebd2ac;
+}
+
 .tech-row {
   display: flex;
   margin-right: 100px;
@@ -19,6 +25,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.item {
+  display: inline;
 }
 
 .tech-pic {

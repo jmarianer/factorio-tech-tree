@@ -16,10 +16,11 @@ data = FactorioData(BASE_DIR, MODS_DIR, MODS)
 
 
 print('Getting technology tree...')
-Tech = namedtuple('Tuple', ['name', 'prerequisites', 'ingredients', 'recipes'])
+Tech = namedtuple('Tuple', ['name', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
 all_techs = {
         name: Tech(
             name=name,
+            localized_title=data.localize('technology-name', name),
             prerequisites=set(v.get('prerequisites', [])),
             ingredients=v['unit']['ingredients'],
             recipes=[
@@ -47,6 +48,6 @@ while True:
 
 
 env = Environment(loader=FileSystemLoader('.'), autoescape=True)
-template = env.get_template("tech-tree.html")
+template = env.get_template('tech-tree.html')
 with open('output/index.html', 'w') as index:
     index.write(template.render(tech_rows=rows))
