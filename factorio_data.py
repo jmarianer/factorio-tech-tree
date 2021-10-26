@@ -197,6 +197,7 @@ class FactorioData:
                 'capsule',
                 'copy-paste-tool',
                 'deconstruction-item',
+                'fluid',
                 'gun',
                 'item',
                 'item-with-entity-data',
@@ -222,12 +223,22 @@ class FactorioData:
         recipe = self.raw['recipe'][recipe_name]
         try:
             spec = get_icon_specs(recipe)
+            return get_factorio_icon(self.reader, spec)
         except KeyError:
-            main_item_name = recipe.get('main_product', recipe['results'][0]['name'])
-            item = self.raw['item'][main_item_name]
-            spec = get_icon_specs(item)
+            if 'normal' in recipe:
+                recipe = recipe['normal']
+            if 'result' in recipe:
+                main_item_name = recipe['result']
+            elif 'main_product' in recipe:
+                main_item_name = recipe['main_product']
+            else:
+                main_item = recipe['results'][0]
+                if 'name' in main_item:
+                    main_item_name = main_item['name']
+                else:
+                    main_item_name = main_item[0]
+            return self.get_item_icon(main_item_name)
 
-        return get_factorio_icon(self.reader, spec)
 
     def localize(self, section, value):
         def get_localized_from_group(match):
