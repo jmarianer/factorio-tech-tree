@@ -251,10 +251,16 @@ class FactorioData:
 
         if value in self.locale[section]:
             localized = self.locale[section][value]
+        elif value in self.locale['recipe-name']:
+            localized = self.locale['recipe-name'][value]
         else:
             match = re.match('(.*)-(\d+)$', value)
             if match:
                 localized = self.locale[section].get(match[1], '???') + ' ' + match[2]
             else:
                 localized = '???'
+            # TODO figure out where ??? come from.
+            # if localized.startswith('???'):
+            #     print(section, value, localized)
+
         return re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized)
