@@ -2,6 +2,7 @@ import configparser
 import json
 import lupa
 import re
+from collections import defaultdict
 
 from defines import defines
 from icon import get_factorio_icon, get_icon_specs
@@ -21,24 +22,29 @@ class FactorioData:
         self.init_lua()
 
         self.lua.globals().mods = python_to_lua_table(self.lua, self.mod_versions)
-        self.lua.execute(self.reader.get_text('__core__/lualib/dataloader.lua'))
-        for lua_source_file in ['data', 'data-updates', 'data-final-fixes']:
+        self.execute_file_from_mod('core', 'lualib/dataloader')
+        for filename in ['settings', 'settings-updates', 'settings-final-fixes']:
             for mod in self.mod_list:
-                try:
-                    text = self.reader.get_text(f'__{mod}__/{lua_source_file}.lua')
-                except FileNotFoundError:
-                    continue
+                self.execute_file_from_mod(mod, filename)
+        self.raw = lua_table_to_python(self.lua.globals().data.raw)
 
-                # Reset package.loaded in between every module because some modules use
-                # packages with identical names.
-                self.lua.execute(f'''
-                    dir_stack = {{"__{mod}__/"}}
-                    for k, v in pairs(package.loaded) do
-                        package.loaded[k] = false
-                    end
-                ''')
-                self.lua.execute(text)
+        # Datatype: bool, int, etc.
+        # Setting type: startup, runtime, etc.
+        settings = defaultdict(dict)
+        for setting_datatype in ['bool', 'int', 'double', 'string']:
+            if f'{setting_datatype}-setting' in self.raw:
+                for setting_name, data in self.raw[f'{setting_datatype}-setting'].items():
+                    settings[data['setting_type']][setting_name] = {
+                        'value': data['default_value']
+                    }
 
+        # TODO incorporate settings from JSON of from live mod-settings:
+        # read_tree_file(f'{self.mods_dir}/mod-settings.dat')
+        self.lua.globals().settings = settings
+
+        for filename in ['data', 'data-updates', 'data-final-fixes']:
+            for mod in self.mod_list:
+                self.execute_file_from_mod(mod, filename)
         self.raw = lua_table_to_python(self.lua.globals().data.raw)
 
     def init_lua(self):
@@ -88,7 +94,6 @@ class FactorioData:
 
         self.lua = lupa.LuaRuntime(unpack_returned_tuples=True)
         self.lua.execute('serpent = require("serpent")')
-        self.lua.globals().settings = read_tree_file(f'{self.mods_dir}/mod-settings.dat')
         self.lua.globals().package.path = \
                 f'{self.base_dir}/base/?.lua;{self.base_dir}/core/lualib/?.lua'
         self.lua.globals().defines = python_to_lua_table(self.lua, defines)
@@ -107,6 +112,22 @@ class FactorioData:
                 return count
             end
         ''')
+
+    def execute_file_from_mod(self, mod, filename):
+        try:
+            text = self.reader.get_text(f'__{mod}__/{filename}.lua')
+        except FileNotFoundError:
+            return
+
+        # Reset package.loaded in between every module because some modules use
+        # packages with identical names.
+        self.lua.execute(f'''
+            dir_stack = {{"__{mod}__/"}}
+            for k, v in pairs(package.loaded) do
+                package.loaded[k] = false
+            end
+        ''')
+        self.lua.execute(text)
 
     def populate_mod_list(self, mods):
         mods = set(mods)
