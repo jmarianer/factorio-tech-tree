@@ -25,13 +25,13 @@ class ModReader:
             with open(f'{self.base_dir}/{game_mod}/{filename}', 'rb') as x:
                 return x.read()
 
-        dir_or_zip = glob(f'{self.mods_dir}/{game_mod}*')[-1]
+        dir_or_zip = glob(f'{self.mods_dir}/{game_mod}_*')[-1]
         if path.isdir(dir_or_zip):
             with open(f'{dir_or_zip}/{filename}', 'rb') as x:
                 return x.read()
 
         zipfile = ZipFile(dir_or_zip)
-        zipped_names = [n for n in zipfile.namelist() if n.endswith('/' + filename)]
+        zipped_names = [n for n in zipfile.namelist() if re.match('[^/]*/' + filename, n)]
         if len(zipped_names) != 1:
             raise FileNotFoundError
 
@@ -50,7 +50,7 @@ class ModReader:
             return [f'__{game_mod}__/' + f.removeprefix(f'{self.base_dir}/{game_mod}/')
                     for f in glob(f'{self.base_dir}/{game_mod}/{filename}')]
 
-        dir_or_zip = glob(f'{self.mods_dir}/{game_mod}*')[-1]
+        dir_or_zip = glob(f'{self.mods_dir}/{game_mod}_*')[-1]
         if path.isdir(dir_or_zip):
             return [f'__{game_mod}__/' + f.removeprefix(f'{dir_or_zip}/')
                     for f in glob(f'{dir_or_zip}/{filename}')]
