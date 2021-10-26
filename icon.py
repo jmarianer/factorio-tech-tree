@@ -17,6 +17,13 @@ def get_factorio_icon(reader, icon_specs):
 
         if 'tint' in icon_spec:
             tint = icon_spec['tint']
+            if isinstance(tint, list):
+                tint = {
+                    'r': tint[0],
+                    'g': tint[1],
+                    'b': tint[2],
+                    'a': tint[3],
+                }
             layer_grayscale = ImageOps.grayscale(layer).getdata()
             layer_alpha = layer.getdata(3)
 
