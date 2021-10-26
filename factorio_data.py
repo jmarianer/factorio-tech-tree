@@ -97,12 +97,14 @@ class FactorioData:
         self.lua.globals().package.path = \
                 f'{self.base_dir}/base/?.lua;{self.base_dir}/core/lualib/?.lua'
         self.lua.globals().defines = python_to_lua_table(self.lua, defines)
-        self.lua.execute('table.insert(package.searchers, 4, ...)', lua_package_searcher)
+        self.lua.execute('table.insert(package.searchers, 1, ...)', lua_package_searcher)
+        self.lua.globals().log = self.log
         self.lua.execute('''
-            require "util"
-
-            function log(...)
+            function math.pow(a, b)
+                return a ^ b
             end
+
+            require "util"
 
             function table_size(t)
                 local count = 0
@@ -128,6 +130,9 @@ class FactorioData:
             end
         ''')
         self.lua.execute(text)
+
+    def log(self, value):
+        print(lua_table_to_python(value))
 
     def populate_mod_list(self, mods):
         mods = set(mods)
