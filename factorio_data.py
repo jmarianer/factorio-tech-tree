@@ -232,25 +232,30 @@ class FactorioData:
     def get_tech_icon(self, tech_name):
         return get_factorio_icon(self.reader, get_icon_specs(self.raw['technology'][tech_name]))
 
+    def get_recipe_main_item(self, recipe_name):
+        recipe = self.raw['recipe'][recipe_name]
+
+        if 'normal' in recipe:
+            recipe = recipe['normal']
+
+        if 'result' in recipe:
+            return recipe['result']
+        elif 'main_product' in recipe:
+            return recipe['main_product']
+        else:
+            main_item = recipe['results'][0]
+            if 'name' in main_item:
+                return main_item['name']
+            else:
+                return main_item[0]
+
     def get_recipe_icon(self, recipe_name):
         recipe = self.raw['recipe'][recipe_name]
         try:
             spec = get_icon_specs(recipe)
             return get_factorio_icon(self.reader, spec)
         except KeyError:
-            if 'normal' in recipe:
-                recipe = recipe['normal']
-            if 'result' in recipe:
-                main_item_name = recipe['result']
-            elif 'main_product' in recipe:
-                main_item_name = recipe['main_product']
-            else:
-                main_item = recipe['results'][0]
-                if 'name' in main_item:
-                    main_item_name = main_item['name']
-                else:
-                    main_item_name = main_item[0]
-            return self.get_item_icon(main_item_name)
+            return self.get_item_icon(self.get_recipe_main_item(recipe_name))
 
 
     def localize(self, section, value):
