@@ -30,7 +30,7 @@ class FactorioData:
 
         # Datatype: bool, int, etc.
         # Setting type: startup, runtime, etc.
-        settings = defaultdict(dict)
+        settings = defaultdict(lambda: defaultdict(lambda: None))
         for setting_datatype in ['bool', 'int', 'double', 'string']:
             if f'{setting_datatype}-setting' in self.raw:
                 for setting_name, data in self.raw[f'{setting_datatype}-setting'].items():
