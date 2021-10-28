@@ -192,33 +192,42 @@ class FactorioData:
             for localefile in self.reader.glob(f'__{mod}__/locale/en/*.cfg'):
                 self.locale.read_string('[EMPTYSECTION]\n' + self.reader.get_text(localefile))
 
+    item_types = [
+            'active-defense-equipment',
+            'ammo',
+            'armor',
+            'assembling-machine',
+            'blueprint',
+            'blueprint-book',
+            'boiler',
+            'capsule',
+            'copy-paste-tool',
+            'deconstruction-item',
+            'equipment',
+            'fluid',
+            'gun',
+            'item',
+            'item-with-entity-data',
+            'item-with-inventory',
+            'item-with-label',
+            'item-with-tags',
+            'module',
+            'rail-planner',
+            'repair-tool',
+            'selection-tool',
+            'spidertron-remote',
+            'storage-tank',
+            'tool',
+            'upgrade-item',
+            ]
+
     def get_item_icon(self, item_name):
-        item_types = [
-                'ammo',
-                'armor',
-                'blueprint',
-                'blueprint-book',
-                'capsule',
-                'copy-paste-tool',
-                'deconstruction-item',
-                'fluid',
-                'gun',
-                'item',
-                'item-with-entity-data',
-                'item-with-inventory',
-                'item-with-label',
-                'item-with-tags',
-                'module',
-                'rail-planner',
-                'repair-tool',
-                'selection-tool',
-                'spidertron-remote',
-                'tool',
-                'upgrade-item',
-                ]
-        for item_type in item_types:
-            if item_name in self.raw[item_type]:
-                return get_factorio_icon(self.reader, get_icon_specs(self.raw[item_type][item_name]))
+        for item_type in self.item_types:
+            if item_type in self.raw and item_name in self.raw[item_type]:
+                try:
+                    return get_factorio_icon(self.reader, get_icon_specs(self.raw[item_type][item_name]))
+                except KeyError:
+                    pass
 
     def get_tech_icon(self, tech_name):
         return get_factorio_icon(self.reader, get_icon_specs(self.raw['technology'][tech_name]))
