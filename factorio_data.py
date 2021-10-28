@@ -123,13 +123,17 @@ class FactorioData:
 
         # Reset package.loaded in between every module because some modules use
         # packages with identical names.
-        self.lua.execute(f'''
-            dir_stack = {{"__{mod}__/"}}
-            for k, v in pairs(package.loaded) do
-                package.loaded[k] = false
-            end
-        ''')
-        self.lua.execute(text)
+        self.lua.eval('''
+            (function(new_dir_stack_entry, contents, filename)
+                dir_stack = {new_dir_stack_entry}
+                for k, v in pairs(package.loaded) do
+                    package.loaded[k] = false
+                end
+                load(contents, filename)()
+            end)(...)''',
+            f'__{mod}__/',
+            text,
+            f'__{mod}__/{filename}.lua')
 
     def log(self, value):
         print(lua_table_to_python(value))
