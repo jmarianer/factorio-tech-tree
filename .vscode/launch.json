@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Create tree",
+            "type": "python",
+            "request": "launch",
+            "program": "create_tech_tree.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
