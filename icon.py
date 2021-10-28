@@ -1,11 +1,14 @@
+from collections import namedtuple
 import io
 from PIL import Image, ImageOps, ImageColor
 
 
-def get_factorio_icon(reader, icon_specs):
-    icon_size = icon_specs[0]['icon_size']
+IconSpec = namedtuple('IconSpec', ['size', 'layers'])
+
+def get_factorio_icon(reader, icon_spec):
+    icon_size = icon_spec.size
     icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
-    for icon_spec in icon_specs:
+    for icon_spec in icon_spec.layers:
         layer_original_size = icon_spec.get('icon_size', icon_size)
         layer_scaled_size = int(layer_original_size * icon_spec.get('scale', 1))
 
@@ -46,7 +49,19 @@ def get_factorio_icon(reader, icon_specs):
 
 
 def get_icon_specs(a_dict):
-    return a_dict['icons'] if 'icons' in a_dict else [{
-        'icon': a_dict['icon'],
-        'icon_size': a_dict['icon_size'],
-        }]
+    if 'icon' in a_dict:
+        layers = [{
+            'icon': a_dict['icon'],
+            }]
+    else:
+        layers = a_dict['icons']
+
+    if 'icon_size' in a_dict:
+        size = a_dict['icon_size']
+    else:
+        for layer in layers:
+            if 'icon_size' in layer:
+                size = layer['icon_size']
+                break
+
+    return IconSpec(size, layers)
