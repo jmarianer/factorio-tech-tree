@@ -4,15 +4,13 @@ from jinja2 import Environment, FileSystemLoader
 from factorio_data import FactorioData
 
 # CONFIG
-SUPPORT='/Users/joeym/Library/Application Support'
-BASE_DIR=f'{SUPPORT}/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
-MODS_DIR=f'{SUPPORT}/Factorio/mods'
+BASE_DIR='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
 MODS=['IndustrialRevolution']
 
 
 # MAIN
 print('Getting Factorio data...')
-data = FactorioData(BASE_DIR, MODS_DIR, MODS)
+data = FactorioData(BASE_DIR, 'mod_cache', MODS)
 
 
 print('Getting technology tree...')

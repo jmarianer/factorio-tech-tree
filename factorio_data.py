@@ -8,14 +8,13 @@ from defines import defines
 from icon import get_factorio_icon, get_icon_specs
 from mod_reader import ModReader
 from property_tree import read_tree_file
-from utils import python_to_lua_table, lua_table_to_python
+from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
 
 
 class FactorioData:
-    def __init__(self, base_dir, mods_dir, mods):
+    def __init__(self, base_dir, mod_cache_dir, mods):
         self.base_dir = base_dir
-        self.mods_dir = mods_dir
-        self.reader = ModReader(base_dir, mods_dir)
+        self.reader = ModReader(base_dir, mod_cache_dir)
 
         self.populate_mod_list(mods)
         self.init_locale()
@@ -39,7 +38,7 @@ class FactorioData:
                     }
 
         # TODO incorporate settings from JSON of from live mod-settings:
-        # read_tree_file(f'{self.mods_dir}/mod-settings.dat')
+        # read_tree_file('.../mod-settings.dat')
         self.lua.globals().settings = settings
 
         for filename in ['data', 'data-updates', 'data-final-fixes']:
@@ -151,25 +150,17 @@ class FactorioData:
                 break
 
             for mod in new_mods:
+                self.reader.add_mod(mod)
                 info_json = json.loads(self.reader.get_text(f'__{mod}__/info.json'))
                 self.mod_versions[mod] = info_json.get('version', None)
-                # ! for incompatibility
-                # ? for an optional dependency
-                # (?) for a hidden optional dependency
-                # ~ for a dependency that does not affect load order
-                # or no prefix for a hard requirement for the other mod.
 
-                # Get all required dependencies, and also all optional
-                # dependencies that affect load order
                 required_deps = []
                 load_order_constraints[mod] = []
                 for dependency_spec in info_json['dependencies']:
-                    if dependency_spec[0] not in "!(?)~":
-                        dependency_spec = '= ' + dependency_spec
-                    prefix, dep = dependency_spec.split(' ')[0:2]
-                    if prefix in {'=', '~'}:
+                    prefix, dep, _ = parse_dependencies(dependency_spec)
+                    if prefix in {None, '~'}:
                         required_deps.append(dep)
-                    if prefix in {'=', '?', '(?)'}:
+                    if prefix in {None, '?', '(?)'}:
                         load_order_constraints[mod].append(dep)
 
                 mods.update(required_deps)

@@ -1,6 +1,7 @@
 import base64
 import io
 import lupa
+import re
 
 
 def lua_table_to_python(obj):
@@ -29,3 +30,14 @@ def image_to_data_url(image):
     image.save(stream, 'png')
     encoded = base64.b64encode(stream.getvalue()).decode('ascii')
     return 'data:image/jpeg;base64,' + encoded
+
+
+def parse_dependencies(dependency_spec):
+    # ! for incompatibility
+    # ? for an optional dependency
+    # (?) for a hidden optional dependency
+    # ~ for a dependency that does not affect load order
+    # or no prefix for a hard requirement for the other mod.
+    match = re.match('^(?P<prefix>!|\?|\(\?\)|~)? \s* (?P<mod>[^ ]+) (?P<rest>.*)$', dependency_spec, re.VERBOSE)
+    return match['prefix'], match['mod'], match['rest']
+
