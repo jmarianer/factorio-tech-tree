@@ -156,7 +156,7 @@ class FactorioData:
 
                 required_deps = []
                 load_order_constraints[mod] = []
-                for dependency_spec in info_json['dependencies']:
+                for dependency_spec in info_json.get('dependencies', []):
                     prefix, dep, _ = parse_dependencies(dependency_spec)
                     if prefix in {None, '~'}:
                         required_deps.append(dep)
