@@ -38,6 +38,6 @@ def parse_dependencies(dependency_spec):
     # (?) for a hidden optional dependency
     # ~ for a dependency that does not affect load order
     # or no prefix for a hard requirement for the other mod.
-    match = re.match('^(?P<prefix>!|\?|\(\?\)|~)? \s* (?P<mod>[^ ]+) (?P<rest>.*)$', dependency_spec, re.VERBOSE)
+    match = re.match('^(?P<prefix>!|\?|\(\?\)|~)? \s* (?P<mod>.+?) \s* (?P<rest>[=>].*)?$', dependency_spec, re.VERBOSE)
     return match['prefix'], match['mod'], match['rest']
 
