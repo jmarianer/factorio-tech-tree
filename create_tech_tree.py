@@ -81,7 +81,26 @@ while True:
         break
 
     rows.append([all_techs[t] for t in new_available])
+
     prerequisites.update(new_available)
+
+
+print('Creating icons')
+for tech in all_techs.values():
+    data.get_tech_icon(tech.name).save(f'output/tech_{tech.name}.png')
+
+for recipe in all_recipes:
+    data.get_recipe_icon(recipe).save(f'output/recipe_{recipe}.png')
+
+all_items = {ingredient.name
+             for tech in all_techs.values()
+             for ingredient in tech.ingredients}
+all_items.update({item.name
+                  for recipe in all_recipes.values()
+                  for item_list in [recipe.ingredients, recipe.products]
+                  for item in item_list})
+for item in all_items:
+    data.get_item_icon(item).save(f'output/item_{item}.png')
 
 
 env = Environment(loader=FileSystemLoader('.'), autoescape=True)
