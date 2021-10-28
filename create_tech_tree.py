@@ -16,21 +16,54 @@ data = FactorioData(BASE_DIR, MODS_DIR, MODS)
 
 
 print('Getting technology tree...')
-Tech = namedtuple('Tech', ['name', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
-Recipe = namedtuple('Recipe', ['name', 'localized_title'])
+# TODO Wonder what parts of this can go into factorio_data or some other helper module
+Tech = namedtuple('Tech', ['name', 'time', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
+Recipe = namedtuple('Recipe', ['name', 'localized_title', 'ingredients', 'products', 'time'])
+Item = namedtuple('Item', ['name', 'amount', 'localized_title'])
+
+def raw_to_item_list(raw_items):
+    for raw_item in raw_items:
+        if isinstance(raw_item, dict):
+            name = raw_item['name']
+            if 'amount' in raw_item:
+                amount = raw_item['amount']
+            else:
+                amount = f'{raw_item["amount_min"]}–{raw_item["amount_max"]}'
+        else:
+            name, amount = raw_item
+        yield Item(name, amount, data.localize_item(name))
+
+def raw_to_recipe(raw_recipe):
+    name = raw_recipe['name']
+
+    if 'normal' in raw_recipe:
+        raw_recipe = raw_recipe['normal']
+
+    if 'results' in raw_recipe:
+        results = raw_recipe['results']
+    else:
+        results = [[raw_recipe['result'], 1]]
+    return Recipe(
+            name=name,
+            localized_title=data.localize_recipe(name),
+            ingredients=list(raw_to_item_list(raw_recipe['ingredients'])),
+            products=list(raw_to_item_list(results)),
+            time=raw_recipe.get('energy_required', 0.5),
+        )
+
+all_recipes = {name: raw_to_recipe(raw_recipe)
+               for name, raw_recipe in data.raw['recipe'].items()}
+
 all_techs = {
         name: Tech(
             name=name,
-            localized_title=data.localize('technology-name', name),
+            time=v['unit']['time'],
+            localized_title=data.localize_tech(v),
             prerequisites=set(v.get('prerequisites', [])),
-            ingredients=v['unit']['ingredients'],
-            recipes=[
-                Recipe(
-                    name=effect['recipe'],
-                    localized_title=data.localize('item-name', effect['recipe']),
-                )
-                for effect in v.get('effects', [])
-                if 'recipe' in effect
+            ingredients=list(raw_to_item_list(v['unit']['ingredients'])),
+            recipes=[all_recipes[effect['recipe']]
+                     for effect in v.get('effects', [])
+                     if 'recipe' in effect
             ])
         for name, v in data.raw['technology'].items()
         if v.get('enabled', True)}
