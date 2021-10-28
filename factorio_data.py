@@ -269,16 +269,37 @@ class FactorioData:
 
         if value in self.locale[section]:
             localized = self.locale[section][value]
-        elif value in self.locale['recipe-name']:
-            localized = self.locale['recipe-name'][value]
         else:
             match = re.match('(.*)-(\d+)$', value)
-            if match:
-                localized = self.locale[section].get(match[1], '???') + ' ' + match[2]
-            else:
-                localized = '???'
-            # TODO figure out where ??? come from.
-            # if localized.startswith('???'):
-            #     print(section, value, localized)
+            # TODO get rid of this debugging stuff
+            if not match:
+                breakpoint()
+            if match[1] not in self.locale[section]:
+                breakpoint()
+            localized = self.locale[section][match[1]] + ' ' + match[2]
 
         return re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized)
+
+    def localize_tech(self, tech):
+        if 'localised_name' in tech:
+            return str(tech['localised_name'])
+        return self.localize('technology-name', tech['name'])
+
+    def localize_item(self, item_name):
+        for item_type in self.item_types:
+            if item_type in self.raw and item_name in self.raw[item_type] and 'localised_name' in self.raw[item_type][item_name]:
+                # TODO not this
+                return str(self.raw[item_type][item_name]['localised_name'])
+            if f'{item_type}-name' in self.locale and item_name in self.locale[f'{item_type}-name']:
+                return self.localize(f'{item_type}-name', item_name)
+
+        return self.localize('entity-name', item_name)
+
+    def localize_recipe(self, recipe_name):
+        if 'localised_name' in self.raw['recipe'][recipe_name]:
+            # TODO not this
+            return str(self.raw['recipe'][recipe_name]['localised_name'])
+        if recipe_name in self.locale['recipe-name']:
+            return self.localize('recipe-name', recipe_name)
+
+        return self.localize_item(self.get_recipe_main_item(recipe_name))
