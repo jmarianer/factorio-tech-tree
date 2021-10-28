@@ -7,25 +7,66 @@
     <script src='../tech-tree.js' charset='UTF-8'></script>
   </head>
   <body>
-    <div id='tooltip'></div>
     {% for row in tech_rows %}
+    {% for subrow in row | batch(8) %}
     <div class='tech-row'>
-      {% for tech in row %}
-      <div class='tech' id='tech_{{ tech.name }}' data-title='{{ tech.localized_title }}'>
+      {% for tech in subrow %}
+      <div class='tech' id='tech_{{ tech.name }}'>
+        <div class='tooltip'>
+          <div class='title'>
+            {{ tech.localized_title }}
+          </div>
+          {% for ingredient in tech.ingredients %}
+          <div class='ingredient'>
+            <img class='item-pic' src='item_{{ ingredient.name }}.png'>
+            {{ ingredient.amount }} x {{ ingredient.localized_title }}
+          </div>
+          {% endfor %}
+          <div class='time'>
+            <img class='item-pic' src='../clock-icon.png'>
+            {{ tech.time }} s crafting time
+          </div>
+        </div>
         <img class='tech-pic' src='tech_{{ tech.name }}.png'>
         <div class='items'>
-          {% for recipe in tech.recipes %}
-          <div class='item' data-title='{{ recipe.localized_title }}'>
+          {% for recipe_row in tech.recipes | batch(4) %}
+          {% for recipe in recipe_row %}
+          <div class='item'>
+            <div class='tooltip'>
+              <div class='title'>
+                {{ recipe.localized_title }} (Recipe)
+              </div>
+              {% for ingredient in recipe.ingredients %}
+              <div class='ingredient'>
+                <img class='item-pic' src='item_{{ ingredient.name }}.png'>
+                {{ ingredient.amount }} x {{ ingredient.localized_title }}
+              </div>
+              {% endfor %}
+              <div class='time'>
+                <img class='item-pic' src='../clock-icon.png'>
+                {{ recipe.time }} s crafting time
+              </div>
+              Produces:
+              {% for product in recipe.products %}
+              <div class='product'>
+                <img class='item-pic' src='item_{{ product.name }}.png'>
+                {{ product.amount }} x {{ product.localized_title }}
+              </div>
+              {% endfor %}
+            </div>
             <img
                 class='item-pic'
                 id='item_{{ recipe.name }}'
                 src='recipe_{{ recipe.name }}.png'>
           </div>
           {% endfor %}
+          <br />
+          {% endfor %}
         </div>
       </div>
       {% endfor %}
     </div>
+    {% endfor %}
     {% endfor %}
   </body>
 </html>
