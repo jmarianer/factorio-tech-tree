@@ -1,3 +1,4 @@
+import os
 from collections import namedtuple
 from jinja2 import Environment, FileSystemLoader
 
@@ -10,7 +11,7 @@ MODS=['IndustrialRevolution']
 
 # MAIN
 print('Getting Factorio data...')
-data = FactorioData(BASE_DIR, 'mod_cache', MODS)
+data = FactorioData(BASE_DIR, 'mod_cache', MODS, os.getenv('FACTORIO_USERNAME'), os.getenv('FACTORIO_TOKEN'))
 
 
 print('Getting technology tree...')

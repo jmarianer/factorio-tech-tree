@@ -12,9 +12,9 @@ from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
 
 
 class FactorioData:
-    def __init__(self, base_dir, mod_cache_dir, mods):
+    def __init__(self, base_dir, mod_cache_dir, mods, username, token):
         self.base_dir = base_dir
-        self.reader = ModReader(base_dir, mod_cache_dir)
+        self.reader = ModReader(base_dir, mod_cache_dir, username, token)
 
         self.populate_mod_list(mods)
         self.init_locale()
