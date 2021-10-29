@@ -50,22 +50,30 @@ def raw_to_recipe(raw_recipe):
             time=raw_recipe.get('energy_required', 0.5),
         )
 
+def raw_to_tech(raw_tech):
+    count = raw_tech['unit']['count']
+    ingredients = [
+            Item(i.name, i.amount * count, i.localized_title)
+            for i in raw_to_item_list(raw_tech['unit']['ingredients'])]
+    return Tech(
+            name=raw_tech['name'],
+            time=raw_tech['unit']['time'] * count,
+            localized_title=data.localize_tech(raw_tech),
+            prerequisites=set(raw_tech.get('prerequisites', [])),
+            ingredients=ingredients,
+            recipes=[all_recipes[effect['recipe']]
+                     for effect in raw_tech.get('effects', [])
+                     if 'recipe' in effect
+            ])
+
 all_recipes = {name: raw_to_recipe(raw_recipe)
                for name, raw_recipe in data.raw['recipe'].items()}
 
 all_techs = {
-        name: Tech(
-            name=name,
-            time=v['unit']['time'],
-            localized_title=data.localize_tech(v),
-            prerequisites=set(v.get('prerequisites', [])),
-            ingredients=list(raw_to_item_list(v['unit']['ingredients'])),
-            recipes=[all_recipes[effect['recipe']]
-                     for effect in v.get('effects', [])
-                     if 'recipe' in effect
-            ])
-        for name, v in data.raw['technology'].items()
-        if v.get('enabled', True)}
+        name: raw_to_tech(raw_tech)
+        for name, raw_tech in data.raw['technology'].items()
+        if raw_tech.get('enabled', True)
+        and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
 
 prerequisites = set()
