@@ -11,7 +11,7 @@
     {% for subrow in row | batch(8) %}
     <div class='tech-row'>
       {% for tech in subrow %}
-      <div class='tech' id='tech_{{ tech.name }}'>
+      <div class='tech' id='tech_{{ tech.name }}' data-name='{{ tech.name }}' data-prerequisites='{{ tech.prerequisites | join(',') }}'>
         <div class='tooltip'>
           <div class='title'>
             {{ tech.localized_title }}
