@@ -8,6 +8,10 @@ IconSpec = namedtuple('IconSpec', ['size', 'layers'])
 def get_factorio_icon(reader, icon_spec):
     icon_size = icon_spec.size
     icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
+    x1 = None
+    x2 = None
+    y1 = None
+    y2 = None
     for icon_spec in icon_spec.layers:
         layer_original_size = icon_spec.get('icon_size', icon_size)
         layer_scaled_size = int(layer_original_size * icon_spec.get('scale', 1))
@@ -41,11 +45,22 @@ def get_factorio_icon(reader, icon_spec):
 
         shift_x, shift_y = icon_spec.get('shift', (0, 0))
         default_offset = (icon_size - layer_scaled_size) / 2
-        offset = tuple(map(int, (default_offset + shift_x, default_offset + shift_y)))
+        shift_x += default_offset
+        shift_y += default_offset
+        offset = tuple(map(int, (shift_x, shift_y)))
 
         icon.alpha_composite(layer, offset)
 
-    return icon
+        if x1 is None or x1 > shift_x:
+            x1 = shift_x
+        if x2 is None or x2 < shift_x + layer_scaled_size:
+            x2 = shift_x + layer_scaled_size
+        if y1 is None or y1 > shift_y:
+            y1 = shift_y
+        if y2 is None or y2 < shift_y + layer_scaled_size:
+            y2 = shift_y + layer_scaled_size
+
+    return icon.crop([x1, y1, x2, y2])
 
 
 def get_icon_specs(a_dict):
