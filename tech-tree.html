@@ -46,7 +46,9 @@
                 <img class='item-pic' src='clock-icon.png'>
                 {{ recipe.time }} s crafting time
               </div>
-              Produces:
+              <div class='produces'>
+                Produces:
+              </div>
               {% for product in recipe.products %}
               <div class='product'>
                 <img class='item-pic' src='item_{{ product.name }}.png'>

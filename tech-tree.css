@@ -19,6 +19,11 @@ body {
   color: black;
 }
 
+.tooltip .produces {
+  padding: 6px 8px;
+  font-weight: bold;
+}
+
 .ingredient, .product, .time {
   padding-left: 6px;
   padding-right: 6px;
