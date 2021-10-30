@@ -22,10 +22,28 @@ $(function() {
 
   function showTreeUp(tech_name) {
     let tech = $(document.getElementById('tech_' + tech_name));
-    tech.addClass('selected').removeClass('blurred');
-    let prereqs = tech.data('prerequisites').split(',');
+    tech.removeClass('blurred');
+    let prereqs = tech.data('prerequisites');
+    if (prereqs === '') {
+      return;
+    }
+    prereqs = prereqs.split(',');
     for (let prereq of prereqs) {
       showTreeUp(prereq);
+    }
+  }
+
+  function showTreeDown(tech_name) {
+    for (let tech of $('.tech')) {
+      let prereqs = $(tech).data('prerequisites');
+      if (prereqs === '') {
+        continue;
+      }
+      prereqs = prereqs.split(',');
+      if (prereqs.includes(tech_name)) {
+        $(tech).removeClass('blurred');
+        showTreeDown($(tech).data('name'));
+      }
     }
   }
 
@@ -34,10 +52,11 @@ $(function() {
     e.stopPropagation();
  
     $('.tech').removeClass('selected').addClass('blurred');
+    source.addClass('selected');
 
     let tech_name = source.data('name');
     showTreeUp(tech_name);
-    // TODO showTreeDown(tech_name);
+    showTreeDown(tech_name);
   });
 
   $('body').on('click', e => {
