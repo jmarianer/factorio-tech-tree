@@ -271,7 +271,7 @@ class FactorioData:
             if match_object[1] == 'ENTITY':
                 return self.localize('entity-name', match_object[2])
             elif match_object[1] == 'ITEM':
-                return self.localize('item-name', match_object[2])
+                return self.localize_item(match_object[2])
             else:
                 return match_object[0]
 
