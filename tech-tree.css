@@ -10,6 +10,7 @@ body {
   position: absolute;
   background-color: #404040f4;
   color: white;
+  max-width: 20rem;
 }
 
 .tooltip .title {
