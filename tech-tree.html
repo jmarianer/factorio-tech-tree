@@ -2,9 +2,9 @@
 <html>
   <head>
     <title>Tech Tree</title>
-    <link rel='stylesheet' href='../tech-tree.css' />
+    <link rel='stylesheet' href='tech-tree.css' />
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js'></script>
-    <script src='../tech-tree.js' charset='UTF-8'></script>
+    <script src='tech-tree.js' charset='UTF-8'></script>
   </head>
   <body>
     {% for row in tech_rows %}
@@ -23,7 +23,7 @@
           </div>
           {% endfor %}
           <div class='time'>
-            <img class='item-pic' src='../clock-icon.png'>
+            <img class='item-pic' src='clock-icon.png'>
             {{ tech.time }} s crafting time
           </div>
         </div>
@@ -43,7 +43,7 @@
               </div>
               {% endfor %}
               <div class='time'>
-                <img class='item-pic' src='../clock-icon.png'>
+                <img class='item-pic' src='clock-icon.png'>
                 {{ recipe.time }} s crafting time
               </div>
               Produces:
