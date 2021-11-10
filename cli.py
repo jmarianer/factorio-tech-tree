@@ -19,9 +19,9 @@ def cli():
 @click.option('--factorio-token', envvar='FACTORIO_TOKEN')
 @click.option('--mods', multiple=True)
 @click.option('--output', default='data.json')
-def dump_data(mod_cache_dir, factorio_base, factorio_username, factorio_token, mods, output):
-    data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token)
-    click.echo(data.mod_versions)
+@click.option('-q', '--quiet', is_flag=True)
+def dump_data(mod_cache_dir, factorio_base, factorio_username, factorio_token, mods, output, quiet):
+    data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
     with open(output, 'w') as f:
         f.write(json.dumps(data.raw, sort_keys=True, indent=4))
 
@@ -33,9 +33,9 @@ def dump_data(mod_cache_dir, factorio_base, factorio_username, factorio_token, m
 @click.option('--factorio-token', envvar='FACTORIO_TOKEN')
 @click.option('--mods', multiple=True)
 @click.option('--output', default='output')
-def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_token, mods, output):
-    data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token)
-    click.echo(data.mod_versions)
+@click.option('-q', '--quiet', is_flag=True)
+def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_token, mods, output, quiet):
+    data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
     # TODO None of this should be here...
     Tech = namedtuple('Tech', ['name', 'time', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
@@ -111,7 +111,6 @@ def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_t
 
         prerequisites.update(new_available)
 
-    click.echo('Creating icons')
     for tech in all_techs.values():
         data.get_tech_icon(tech.name).save(f'{output}/tech_{tech.name}.png')
 
