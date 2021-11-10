@@ -1,3 +1,6 @@
 __pycache__
 mod_cache
 output
+.idea
+env
+venv
