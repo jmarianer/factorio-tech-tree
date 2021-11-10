@@ -4,3 +4,4 @@ output
 .idea
 env
 venv
+data.json
