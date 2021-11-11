@@ -315,10 +315,11 @@ class FactorioData:
 
     def localize_array(self, array: list[Any]) -> str:
         def localize_match(match: Match[str]) -> str:
-            new_value = array[int(match[1])]
+            return self.localize_array(array[int(match[1])])
 
-            if isinstance(new_value, str):
-                return new_value
-            return self.localize_array(new_value)
-
-        return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
+        if isinstance(array, str):
+            return array
+        elif not array[0]:
+            return ''.join(self.localize_array(x) for x in array)
+        else:
+            return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
