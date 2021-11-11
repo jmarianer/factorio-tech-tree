@@ -17,3 +17,10 @@ python cli.py create-tech-tree --output some_directory --mods IndustrialRevoluti
 ```
 
 See `test.sh` for more examples.
+
+## Type checking
+
+```
+mypy . --strict
+Success: no issues found in 8 source files
+```

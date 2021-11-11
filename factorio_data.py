@@ -3,6 +3,8 @@ import json
 import lupa
 import re
 from collections import defaultdict
+from typing import Any, Match
+from PIL.Image import Image
 
 from defines import defines
 from icon import get_factorio_icon, get_icon_specs
@@ -11,12 +13,13 @@ from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
 
 
 class FactorioData:
-    def __init__(self, base_dir, mod_cache_dir, mods, username, token, quiet=False):
+    def __init__(self, base_dir: str, mod_cache_dir: str, mods: list[str],
+                 username: str, token: str, quiet: bool = False):
         self.base_dir = base_dir
         self.reader = ModReader(base_dir, mod_cache_dir, username, token)
         self.quiet = quiet
 
-        self.mod_list, self.mod_versions = self.populate_mod_list(mods)
+        self.mod_list, self.mod_versions = self.populate_mod_list(set(mods))
         self.locale = self.init_locale()
         self.lua = self.init_lua()
 
@@ -29,7 +32,7 @@ class FactorioData:
 
         # Datatype: bool, int, etc.
         # Setting type: startup, runtime, etc.
-        settings = defaultdict(lambda: defaultdict(lambda: None))
+        settings: dict[str, dict[str, Any]] = defaultdict(lambda: defaultdict(lambda: None))
         for setting_datatype in ['bool', 'int', 'double', 'string']:
             if f'{setting_datatype}-setting' in self.raw:
                 for setting_name, data in self.raw[f'{setting_datatype}-setting'].items():
@@ -46,8 +49,8 @@ class FactorioData:
                 self.execute_file_from_mod(mod, filename)
         self.raw = lua_table_to_python(self.lua.globals().data.raw)
 
-    def init_lua(self):
-        def lua_package_searcher(require_argument):
+    def init_lua(self) -> lupa.LuaRuntime:
+        def lua_package_searcher(require_argument: str) -> Any:
             # Lua allows "require foo.bar.baz", "require foo/bar/baz" and "require
             # foo/bar/baz.lua". Convert the former two to the latter, canonical form.
             if '/' not in require_argument:
@@ -66,7 +69,11 @@ class FactorioData:
                 if not lua.globals().dir_stack:
                     return
                 current_module = lua.globals().dir_stack[1]
-                game_mod_root = re.match('(__.*__/).*', current_module)[1]
+                match = re.match('(__.*__/).*', current_module)
+                if match:
+                    game_mod_root = match[1]
+                else:
+                    raise
                 paths = [current_module + require_argument, game_mod_root + require_argument]
 
             for path in paths:
@@ -117,7 +124,7 @@ class FactorioData:
 
         return lua
 
-    def execute_file_from_mod(self, mod, filename):
+    def execute_file_from_mod(self, mod: str, filename: str) -> Any:
         try:
             text = self.reader.get_text(f'__{mod}__/{filename}.lua')
         except FileNotFoundError:
@@ -138,17 +145,16 @@ class FactorioData:
             text,
             f'__{mod}__/{filename}.lua')
 
-    def log(self, value):
+    def log(self, value: str) -> None:
         if not self.quiet:
             print(lua_table_to_python(value))
 
-    def populate_mod_list(self, mods):
-        mods = set(mods)
+    def populate_mod_list(self, mods: set[str]) -> tuple[list[str], dict[str, str]]:
         mods.update({'base', 'core'})
 
         # Get all mods including dependencies
-        mod_versions = {}
-        load_order_constraints = {}
+        mod_versions: dict[str, str] = {}
+        load_order_constraints: dict[str, list[str]] = {}
         while True:
             new_mods = mods - mod_versions.keys()
             if len(new_mods) == 0:
@@ -184,7 +190,8 @@ class FactorioData:
 
         return mod_list, mod_versions
 
-    def init_locale(self):
+    # TODO type properly after revamping locale stuff
+    def init_locale(self) -> Any:
         locale = configparser.ConfigParser()
         for mod in self.mod_list:
             for locale_file in self.reader.glob(f'__{mod}__/locale/en/*.cfg'):
@@ -222,35 +229,36 @@ class FactorioData:
             'upgrade-item',
             ]
 
-    def get_item_icon(self, item_name):
+    def get_item_icon(self, item_name: str) -> Image:
         for item_type in self.item_types:
             if item_type in self.raw and item_name in self.raw[item_type]:
                 try:
                     return get_factorio_icon(self.reader, get_icon_specs(self.raw[item_type][item_name]))
                 except KeyError:
                     pass
+        raise
 
-    def get_tech_icon(self, tech_name):
+    def get_tech_icon(self, tech_name: str) -> Image:
         return get_factorio_icon(self.reader, get_icon_specs(self.raw['technology'][tech_name]))
 
-    def get_recipe_main_item(self, recipe_name):
+    def get_recipe_main_item(self, recipe_name: str) -> str:
         recipe = self.raw['recipe'][recipe_name]
 
         if 'normal' in recipe:
             recipe = recipe['normal']
 
         if 'result' in recipe:
-            return recipe['result']
+            return str(recipe['result'])
         elif 'main_product' in recipe:
-            return recipe['main_product']
+            return str(recipe['main_product'])
         else:
             main_item = recipe['results'][0]
             if 'name' in main_item:
-                return main_item['name']
+                return str(main_item['name'])
             else:
-                return main_item[0]
+                return str(main_item[0])
 
-    def get_recipe_icon(self, recipe_name):
+    def get_recipe_icon(self, recipe_name: str) -> Image:
         recipe = self.raw['recipe'][recipe_name]
         try:
             spec = get_icon_specs(recipe)
@@ -258,29 +266,31 @@ class FactorioData:
         except KeyError:
             return self.get_item_icon(self.get_recipe_main_item(recipe_name))
 
-    def localize(self, section, value):
-        def get_localized_from_group(match_text):
-            if match_text[1] == 'ENTITY':
-                return self.localize('entity-name', match_text[2])
-            elif match_text[1] == 'ITEM':
-                return self.localize('item-name', match_text[2])
+    def localize(self, section: str, value: str) -> str:
+        def get_localized_from_group(match_object: Match[str]) -> str:
+            if match_object[1] == 'ENTITY':
+                return self.localize('entity-name', match_object[2])
+            elif match_object[1] == 'ITEM':
+                return self.localize('item-name', match_object[2])
             else:
-                return match_text[0]
+                return match_object[0]
 
         if value in self.locale[section]:
             localized = self.locale[section][value]
         else:
             match = re.match(r'(.*)-(\d+)$', value)
+            if not match:
+                raise
             localized = self.locale[section][match[1]] + ' ' + match[2]
 
-        return re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized)
+        return str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
 
-    def localize_tech(self, tech):
+    def localize_tech(self, tech: Any) -> str:
         if 'localised_name' in tech:
             return str(tech['localised_name'])
         return self.localize('technology-name', tech['name'])
 
-    def localize_item(self, item_name):
+    def localize_item(self, item_name: str) -> str:
         try:
             for item_type in self.item_types:
                 if item_type in self.raw \
@@ -295,7 +305,7 @@ class FactorioData:
         except:  # noqa
             return item_name
 
-    def localize_recipe(self, recipe_name):
+    def localize_recipe(self, recipe_name: str) -> str:
         try:
             if 'localised_name' in self.raw['recipe'][recipe_name]:
                 # TODO not this

@@ -3,12 +3,13 @@ import json
 from collections import namedtuple
 from jinja2 import Environment, FileSystemLoader
 from shutil import copyfile
+from typing import Any, Iterator
 
 from factorio_data import FactorioData
 
 
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
@@ -20,7 +21,8 @@ def cli():
 @click.option('--mods', multiple=True)
 @click.option('--output', default='data.json')
 @click.option('-q', '--quiet', is_flag=True)
-def dump_data(mod_cache_dir, factorio_base, factorio_username, factorio_token, mods, output, quiet):
+def dump_data(mod_cache_dir: str, factorio_base: str, factorio_username: str, factorio_token: str,
+              mods: list[str], output: str, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
     with open(output, 'w') as f:
         f.write(json.dumps(data.raw, sort_keys=True, indent=4))
@@ -34,7 +36,8 @@ def dump_data(mod_cache_dir, factorio_base, factorio_username, factorio_token, m
 @click.option('--mods', multiple=True)
 @click.option('--output', default='output')
 @click.option('-q', '--quiet', is_flag=True)
-def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_token, mods, output, quiet):
+def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: str, factorio_token: str,
+                     mods: list[str], output: str, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
     # TODO None of this should be here...
@@ -42,7 +45,7 @@ def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_t
     Recipe = namedtuple('Recipe', ['name', 'localized_title', 'ingredients', 'products', 'time'])
     Item = namedtuple('Item', ['name', 'amount', 'localized_title'])
 
-    def raw_to_item_list(raw_items):
+    def raw_to_item_list(raw_items: list[Any]) -> Iterator[Item]:
         for raw_item in raw_items:
             if isinstance(raw_item, dict):
                 name = raw_item['name']
@@ -54,7 +57,7 @@ def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_t
                 name, amount = raw_item
             yield Item(name, amount, data.localize_item(name))
 
-    def raw_to_recipe(raw_recipe):
+    def raw_to_recipe(raw_recipe: Any) -> Recipe:
         name = raw_recipe['name']
 
         if 'normal' in raw_recipe:
@@ -72,7 +75,7 @@ def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_t
                 time=raw_recipe.get('energy_required', 0.5),
             )
 
-    def raw_to_tech(raw_tech):
+    def raw_to_tech(raw_tech: Any) -> Tech:
         count = raw_tech['unit']['count']
         ingredients = [
                 Item(i.name, i.amount * count, i.localized_title)
@@ -96,7 +99,7 @@ def create_tech_tree(mod_cache_dir, factorio_base, factorio_username, factorio_t
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
-    prerequisites = set()
+    prerequisites: set[str] = set()
     rows = []
     while True:
         new_available = sorted(
