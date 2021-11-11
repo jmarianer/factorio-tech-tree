@@ -1,30 +1,35 @@
-from collections import namedtuple
 import io
+from typing import Any, Optional, NamedTuple
 from PIL import Image, ImageOps
 
+from mod_reader import ModReader
 
-IconSpec = namedtuple('IconSpec', ['size', 'layers'])
+
+# TODO Get layers to not be an Any
+class IconSpec(NamedTuple):
+    size: int
+    layers: list[Any]
 
 
-def get_factorio_icon(reader, icon_spec):
+def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
     icon_size = icon_spec.size
     icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
-    x1 = None
-    x2 = None
-    y1 = None
-    y2 = None
-    for icon_spec in icon_spec.layers:
-        layer_original_size = icon_spec.get('icon_size', icon_size)
-        layer_scaled_size = int(layer_original_size * icon_spec.get('scale', 1))
+    x1: Optional[int] = None
+    x2: Optional[int] = None
+    y1: Optional[int] = None
+    y2: Optional[int] = None
+    for icon_layer in icon_spec.layers:
+        layer_original_size = icon_layer.get('icon_size', icon_size)
+        layer_scaled_size = int(layer_original_size * icon_layer.get('scale', 1))
 
         layer = Image \
-            .open(io.BytesIO(reader.get_binary(icon_spec['icon']))) \
-            .crop([0, 0, layer_original_size, layer_original_size]) \
+            .open(io.BytesIO(reader.get_binary(icon_layer['icon']))) \
+            .crop((0, 0, layer_original_size, layer_original_size)) \
             .convert('RGBA') \
             .resize((layer_scaled_size, layer_scaled_size))
 
-        if 'tint' in icon_spec:
-            tint = icon_spec['tint']
+        if 'tint' in icon_layer:
+            tint = icon_layer['tint']
             if isinstance(tint, list):
                 tint = {
                     'r': tint[0],
@@ -42,13 +47,14 @@ def get_factorio_icon(reader, icon_spec):
                         int(grayscale * tint['b']),
                         int(alpha * tint.get('a', 1))),
                     layer_grayscale, layer_alpha)
-            layer.putdata(list(layer_new_data))
+            # TODO Not sure but I think the type of layer.putdata is just wrong in the stub.
+            layer.putdata(list(layer_new_data))  # type: ignore
 
-        shift_x, shift_y = icon_spec.get('shift', (0, 0))
+        shift_x, shift_y = icon_layer.get('shift', (0, 0))
         default_offset = (icon_size - layer_scaled_size) / 2
         shift_x += default_offset
         shift_y += default_offset
-        offset = tuple(map(int, (shift_x, shift_y)))
+        offset = int(shift_x), int(shift_y)
 
         icon.alpha_composite(layer, offset)
 
@@ -61,10 +67,13 @@ def get_factorio_icon(reader, icon_spec):
         if y2 is None or y2 < shift_y + layer_scaled_size:
             y2 = shift_y + layer_scaled_size
 
-    return icon.crop([x1, y1, x2, y2])
+    if x1 and x2 and y1 and y2:
+        return icon.crop((x1, y1, x2, y2))
+    else:
+        return icon
 
 
-def get_icon_specs(a_dict):
+def get_icon_specs(a_dict: Any) -> IconSpec:
     if 'icon' in a_dict:
         layers = [{
             'icon': a_dict['icon'],
