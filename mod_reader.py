@@ -16,7 +16,7 @@ class ModReader:
         self.username = username
         self.token = token
 
-    def add_mod(self, mod, version=None):
+    def add_mod(self, mod, _version=None):
         if mod in self.mod_to_path:
             return
 
@@ -30,16 +30,20 @@ class ModReader:
             download_url = mod_data['releases'][-1]['download_url']
 
             zip_url = f'https://mods.factorio.com{download_url}?username={self.username}&token={self.token}'
-            zip_request = urllib.request.Request(zip_url, headers={'User-Agent':'Joey Marianer is developing a tool. Hoping not to end up eating too much bandwidth. Manual downloads only.'})
+            zip_request = urllib.request.Request(
+                zip_url,
+                headers={
+                    'User-Agent': 'Joey Marianer is developing a tool. Hoping not to end up eating too much bandwidth. '
+                    'Manual downloads only.'})
             zipfile = urllib.request.urlopen(zip_request).read()
             zipfile = ZipFile(io.BytesIO(zipfile))
             os.mkdir(target_dir)
-            for fileinfo in zipfile.filelist:
-                target_path = os.path.join(target_dir, *fileinfo.filename.split(os.sep)[1:])
+            for file_info in zipfile.filelist:
+                target_path = os.path.join(target_dir, *file_info.filename.split(os.sep)[1:])
                 if os.path.basename(target_path) == '':
                     continue
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                with zipfile.open(fileinfo) as source, open(target_path, "wb") as target:
+                with zipfile.open(file_info) as source, open(target_path, "wb") as target:
                     shutil.copyfileobj(source, target)
 
     def get_text(self, a_path):

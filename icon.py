@@ -1,9 +1,10 @@
 from collections import namedtuple
 import io
-from PIL import Image, ImageOps, ImageColor
+from PIL import Image, ImageOps
 
 
 IconSpec = namedtuple('IconSpec', ['size', 'layers'])
+
 
 def get_factorio_icon(reader, icon_spec):
     icon_size = icon_spec.size
@@ -17,10 +18,10 @@ def get_factorio_icon(reader, icon_spec):
         layer_scaled_size = int(layer_original_size * icon_spec.get('scale', 1))
 
         layer = Image \
-                .open(io.BytesIO(reader.get_binary(icon_spec['icon']))) \
-                .crop([0, 0, layer_original_size, layer_original_size]) \
-                .convert('RGBA') \
-                .resize((layer_scaled_size, layer_scaled_size))
+            .open(io.BytesIO(reader.get_binary(icon_spec['icon']))) \
+            .crop([0, 0, layer_original_size, layer_original_size]) \
+            .convert('RGBA') \
+            .resize((layer_scaled_size, layer_scaled_size))
 
         if 'tint' in icon_spec:
             tint = icon_spec['tint']
@@ -71,6 +72,7 @@ def get_icon_specs(a_dict):
     else:
         layers = a_dict['icons']
 
+    size = None
     if 'icon_size' in a_dict:
         size = a_dict['icon_size']
     else:
@@ -78,5 +80,8 @@ def get_icon_specs(a_dict):
             if 'icon_size' in layer:
                 size = layer['icon_size']
                 break
+
+    if size is None:
+        raise
 
     return IconSpec(size, layers)
