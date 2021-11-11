@@ -6,17 +6,18 @@ import shutil
 import urllib.parse
 import urllib.request
 from glob import glob
+from typing import Optional
 from zipfile import ZipFile
 
 
 class ModReader:
-    def __init__(self, base_dir, mod_cache_dir, username, token):
+    def __init__(self, base_dir: str, mod_cache_dir: str, username: str, token: str):
         self.mod_cache_dir = mod_cache_dir
         self.mod_to_path = {x: f'{base_dir}/{x}' for x in ['base', 'core']}
         self.username = username
         self.token = token
 
-    def add_mod(self, mod, _version=None):
+    def add_mod(self, mod: str) -> None:
         if mod in self.mod_to_path:
             return
 
@@ -46,13 +47,13 @@ class ModReader:
                 with zipfile.open(file_info) as source, open(target_path, "wb") as target:
                     shutil.copyfileobj(source, target)
 
-    def get_text(self, a_path):
+    def get_text(self, a_path: str) -> str:
         return self.get_binary(a_path).decode('utf-8')
 
-    def get_binary(self, a_path):
+    def get_binary(self, a_path: str) -> bytes:
         match = re.match('__(.*)__/(.*)', a_path)
         if not match:
-            return None
+            raise
 
         mod_dir = self.mod_to_path[match[1]]
         filename = match[2]
@@ -60,10 +61,10 @@ class ModReader:
         with open(f'{mod_dir}/{filename}', 'rb') as x:
             return x.read()
 
-    def glob(self, a_glob):
+    def glob(self, a_glob: str) -> list[str]:
         match = re.match('__(.*)__/(.*)', a_glob)
         if not match:
-            return None
+            return []
 
         game_mod = match[1]
         mod_dir = self.mod_to_path[game_mod]
