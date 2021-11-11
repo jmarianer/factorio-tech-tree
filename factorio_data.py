@@ -1,4 +1,3 @@
-import configparser
 import json
 import lupa
 import re
@@ -190,15 +189,23 @@ class FactorioData:
 
         return mod_list, mod_versions
 
-    # TODO type properly after revamping locale stuff
-    def init_locale(self) -> Any:
-        locale = configparser.ConfigParser()
+    def init_locale(self) -> dict[str, str]:
+        locale: dict[str, str] = {}
         for mod in self.mod_list:
+            prefix = ''
             for locale_file in self.reader.glob(f'__{mod}__/locale/en/*.cfg'):
-                locale.read_string('[EMPTYSECTION]\n' + self.reader.get_text(locale_file))
+                for line in self.reader.get_text(locale_file).splitlines():
+                    if not line or line[0] in ';#':
+                        continue
+                    if line.startswith('['):
+                        prefix = line[1:-1] + '.'
+                        continue
+                    name, value = line.split('=', 1)
+                    locale[prefix + name] = value
 
         return locale
 
+    # TODO: Split out icon and locale stuff. Figure out where `item_types` goes.
     item_types = [
             'active-defense-equipment',
             'ammo',
@@ -266,53 +273,60 @@ class FactorioData:
         except KeyError:
             return self.get_item_icon(self.get_recipe_main_item(recipe_name))
 
-    def localize(self, section: str, value: str) -> str:
+    def localize(self, name: str) -> str:
         def get_localized_from_group(match_object: Match[str]) -> str:
             if match_object[1] == 'ENTITY':
-                return self.localize('entity-name', match_object[2])
+                return self.localize(f'entity-name.{match_object[2]}')
             elif match_object[1] == 'ITEM':
                 return self.localize_item(match_object[2])
             else:
                 return match_object[0]
 
-        if value in self.locale[section]:
-            localized = self.locale[section][value]
+        if name in self.locale:
+            localized = self.locale[name]
         else:
-            match = re.match(r'(.*)-(\d+)$', value)
+            match = re.match(r'(.*)-(\d+)$', name)
             if not match:
                 raise
-            localized = self.locale[section][match[1]] + ' ' + match[2]
+            localized = self.locale[match[1]] + ' ' + match[2]
 
         return str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
 
     def localize_tech(self, tech: Any) -> str:
         if 'localised_name' in tech:
             return str(tech['localised_name'])
-        return self.localize('technology-name', tech['name'])
+        return self.localize(f'technology-name.{tech["name"]}')
 
     def localize_item(self, item_name: str) -> str:
         try:
             for item_type in self.item_types:
-                if item_type in self.raw \
-                        and item_name in self.raw[item_type] \
-                        and 'localised_name' in self.raw[item_type][item_name]:
-                    # TODO not this
-                    return str(self.raw[item_type][item_name]['localised_name'])
-                if f'{item_type}-name' in self.locale and item_name in self.locale[f'{item_type}-name']:
-                    return self.localize(f'{item_type}-name', item_name)
+                if item_type in self.raw and item_name in self.raw[item_type] and \
+                        'localised_name' in self.raw[item_type][item_name]:
+                    return self.localize_array(self.raw[item_type][item_name]['localised_name'])
+                if f'{item_type}-name.{item_name}' in self.locale:
+                    return self.localize(f'{item_type}-name.{item_name}')
 
-            return self.localize('entity-name', item_name)
+            return self.localize(f'entity-name.{item_name}')
         except:  # noqa
             return item_name
 
     def localize_recipe(self, recipe_name: str) -> str:
         try:
             if 'localised_name' in self.raw['recipe'][recipe_name]:
-                # TODO not this
-                return str(self.raw['recipe'][recipe_name]['localised_name'])
-            if recipe_name in self.locale['recipe-name']:
-                return self.localize('recipe-name', recipe_name)
+                return self.localize_array(self.raw['recipe'][recipe_name]['localised_name'])
+            if f'recipe-name.{recipe_name}' in self.locale:
+                return self.localize(f'recipe-name.{recipe_name}')
 
             return self.localize_item(self.get_recipe_main_item(recipe_name))
         except:  # noqa
             return recipe_name
+
+    def localize_array(self, array: list[Any]) -> str:
+        def localize_match(match: Match[str]) -> str:
+            new_value = array[int(match[1])]
+
+            if isinstance(new_value, str):
+                return new_value
+            return self.localize_array(new_value)
+
+        return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
