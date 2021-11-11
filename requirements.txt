@@ -2,3 +2,5 @@ jinja2
 lupa
 Pillow
 click
+mypy
+types-Pillow
