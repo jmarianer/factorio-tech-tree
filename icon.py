@@ -19,12 +19,14 @@ def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
     y1: Optional[int] = None
     y2: Optional[int] = None
     for icon_layer in icon_spec.layers:
+        layer = Image \
+            .open(io.BytesIO(reader.get_binary(icon_layer['icon'])))
+
         layer_original_size = icon_layer.get('icon_size', icon_size)
         layer_scaled_size = int(layer_original_size * icon_layer.get('scale', 1))
 
-        layer = Image \
-            .open(io.BytesIO(reader.get_binary(icon_layer['icon']))) \
-            .crop((0, 0, layer_original_size, layer_original_size)) \
+        layer = layer \
+            .crop((0, 0, layer.height, layer.height)) \
             .convert('RGBA') \
             .resize((layer_scaled_size, layer_scaled_size))
 
