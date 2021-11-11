@@ -20,33 +20,57 @@ class FactorioData:
 
         self.mod_list, self.mod_versions = self.populate_mod_list(set(mods))
         self.locale = self.init_locale()
-        self.lua = self.init_lua()
+        self.raw = self.read_raw_data()
 
-        self.lua.globals().mods = python_to_lua_table(self.lua, self.mod_versions)
-        self.execute_file_from_mod('core', 'lualib/dataloader')
+    def read_raw_data(self) -> Any:
+        def maybe_execute(path: str) -> Any:
+            try:
+                text = self.reader.get_text(path)
+            except FileNotFoundError:
+                return
+
+            # Reset package.loaded in between every module because some modules use
+            # packages with identical names.
+            mod_root = path.split('/')[0] + '/'
+            lua.eval(
+                '''
+                (function(new_dir_stack_entry, contents, filename)
+                    dir_stack = {new_dir_stack_entry}
+                    for k, v in pairs(package.loaded) do
+                        package.loaded[k] = false
+                    end
+                    load(contents, filename)()
+                end)(...)''',
+                mod_root,
+                text,
+                path)
+
+        lua = self.init_lua()
+        lua.globals().mods = python_to_lua_table(lua, self.mod_versions)
+        maybe_execute('__core__/lualib/dataloader.lua')
         for filename in ['settings', 'settings-updates', 'settings-final-fixes']:
             for mod in self.mod_list:
-                self.execute_file_from_mod(mod, filename)
-        self.raw = lua_table_to_python(self.lua.globals().data.raw)
+                maybe_execute(f'__{mod}__/{filename}.lua')
+        raw_settings = lua_table_to_python(lua.globals().data.raw)
 
         # Datatype: bool, int, etc.
         # Setting type: startup, runtime, etc.
         settings: dict[str, dict[str, Any]] = defaultdict(lambda: defaultdict(lambda: None))
         for setting_datatype in ['bool', 'int', 'double', 'string']:
-            if f'{setting_datatype}-setting' in self.raw:
-                for setting_name, data in self.raw[f'{setting_datatype}-setting'].items():
+            if f'{setting_datatype}-setting' in raw_settings:
+                for setting_name, data in raw_settings[f'{setting_datatype}-setting'].items():
                     settings[data['setting_type']][setting_name] = {
                         'value': data['default_value']
                     }
 
         # TODO incorporate settings from JSON of from live mod-settings:
         # read_tree_file('.../mod-settings.dat')
-        self.lua.globals().settings = settings
+        lua.globals().settings = settings
 
         for filename in ['data', 'data-updates', 'data-final-fixes']:
             for mod in self.mod_list:
-                self.execute_file_from_mod(mod, filename)
-        self.raw = lua_table_to_python(self.lua.globals().data.raw)
+                maybe_execute(f'__{mod}__/{filename}.lua')
+        return lua_table_to_python(lua.globals().data.raw)
 
     def init_lua(self) -> lupa.LuaRuntime:
         def lua_package_searcher(require_argument: str) -> Any:
@@ -122,27 +146,6 @@ class FactorioData:
         ''')
 
         return lua
-
-    def execute_file_from_mod(self, mod: str, filename: str) -> Any:
-        try:
-            text = self.reader.get_text(f'__{mod}__/{filename}.lua')
-        except FileNotFoundError:
-            return
-
-        # Reset package.loaded in between every module because some modules use
-        # packages with identical names.
-        self.lua.eval(
-            '''
-            (function(new_dir_stack_entry, contents, filename)
-                dir_stack = {new_dir_stack_entry}
-                for k, v in pairs(package.loaded) do
-                    package.loaded[k] = false
-                end
-                load(contents, filename)()
-            end)(...)''',
-            f'__{mod}__/',
-            text,
-            f'__{mod}__/{filename}.lua')
 
     def log(self, value: str) -> None:
         if not self.quiet:
