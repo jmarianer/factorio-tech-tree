@@ -287,7 +287,7 @@ class FactorioData:
             self,
             raw_tech,
             name=raw_tech['name'],
-            time=raw_tech['unit']['time'] * count,
+            time=int(raw_tech['unit']['time']) * int(count),
             prerequisite_names=set(raw_tech.get('prerequisites', [])),
             ingredients=ingredients,
             recipes=[self.get_recipe(effect['recipe'])
