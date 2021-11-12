@@ -66,7 +66,7 @@ class Recipe(NamedTuple):
     time: int
 
     @property
-    def main_item(self) -> Item:
+    def _main_item(self) -> Item:
         recipe = self.raw
 
         if 'normal' in recipe:
@@ -91,7 +91,7 @@ class Recipe(NamedTuple):
             elif f'recipe-name.{self.name}' in self.data.locale:
                 return self.data.localize(f'recipe-name.{self.name}')
             else:
-                return self.main_item.localized_title
+                return self._main_item.localized_title
         except:  # noqa
             return self.name
 
@@ -103,7 +103,7 @@ class Recipe(NamedTuple):
             elif f'recipe-description.{self.name}' in self.data.locale:
                 return self.data.localize(f'recipe-description.{self.name}')
             else:
-                return self.main_item.description
+                return self._main_item.description
         except:  # noqa
             return ''
 
@@ -112,7 +112,7 @@ class Recipe(NamedTuple):
         try:
             return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
         except KeyError:
-            return self.main_item.icon
+            return self._main_item.icon
 
 
 class Tech(NamedTuple):

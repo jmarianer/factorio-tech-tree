@@ -17,11 +17,11 @@ class FactorioData:
         self.reader = ModReader(base_dir, mod_cache_dir, username, token)
         self.quiet = quiet
 
-        self.mod_list, self.mod_versions = self.populate_mod_list(set(mods))
-        self.locale = self.init_locale()
-        self.raw = self.read_raw_data()
+        self.mod_list, self.mod_versions = self._populate_mod_list(set(mods))
+        self.locale = self._init_locale()
+        self.raw = self._read_raw_data()
 
-    def read_raw_data(self) -> Any:
+    def _read_raw_data(self) -> Any:
         def maybe_execute(path: str) -> Any:
             try:
                 text = self.reader.get_text(path)
@@ -44,7 +44,7 @@ class FactorioData:
                 text,
                 path)
 
-        lua = self.init_lua()
+        lua = self._init_lua()
         lua.globals().mods = python_to_lua_table(lua, self.mod_versions)
         maybe_execute('__core__/lualib/dataloader.lua')
         for filename in ['settings', 'settings-updates', 'settings-final-fixes']:
@@ -71,7 +71,7 @@ class FactorioData:
                 maybe_execute(f'__{mod}__/{filename}.lua')
         return lua_table_to_python(lua.globals().data.raw)
 
-    def init_lua(self) -> lupa.LuaRuntime:
+    def _init_lua(self) -> lupa.LuaRuntime:
         def lua_package_searcher(require_argument: str) -> Any:
             # Lua allows "require foo.bar.baz", "require foo/bar/baz" and "require
             # foo/bar/baz.lua". Convert the former two to the latter, canonical form.
@@ -150,7 +150,7 @@ class FactorioData:
         if not self.quiet:
             print(lua_table_to_python(value))
 
-    def populate_mod_list(self, mods: set[str]) -> tuple[list[str], dict[str, str]]:
+    def _populate_mod_list(self, mods: set[str]) -> tuple[list[str], dict[str, str]]:
         mods.update({'base', 'core'})
 
         # Get all mods including dependencies
@@ -191,7 +191,7 @@ class FactorioData:
 
         return mod_list, mod_versions
 
-    def init_locale(self) -> dict[str, str]:
+    def _init_locale(self) -> dict[str, str]:
         locale: dict[str, str] = {}
         for mod in self.mod_list:
             prefix = ''
@@ -246,7 +246,7 @@ class FactorioData:
                 raw_item.update(self.raw[item_type][item_name])
         return Item(self, raw_item, item_name, item_type)
 
-    def raw_to_item_list(self, raw_items: list[Any]) -> Iterator[ItemWithCount]:
+    def _raw_to_item_list(self, raw_items: list[Any]) -> Iterator[ItemWithCount]:
         for raw_item in raw_items:
             if isinstance(raw_item, dict):
                 name = raw_item['name']
@@ -272,8 +272,8 @@ class FactorioData:
             self,
             raw_recipe,
             name=recipe_name,
-            ingredients=list(self.raw_to_item_list(raw_recipe['ingredients'])),
-            products=list(self.raw_to_item_list(results)),
+            ingredients=list(self._raw_to_item_list(raw_recipe['ingredients'])),
+            products=list(self._raw_to_item_list(results)),
             time=raw_recipe.get('energy_required', 0.5),
         )
 
@@ -282,7 +282,7 @@ class FactorioData:
         count = raw_tech['unit']['count']
         ingredients = [
             ItemWithCount(self, i.name, i.amount * count)
-            for i in self.raw_to_item_list(raw_tech['unit']['ingredients'])]
+            for i in self._raw_to_item_list(raw_tech['unit']['ingredients'])]
         return Tech(
             self,
             raw_tech,
