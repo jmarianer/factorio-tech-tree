@@ -1,9 +1,7 @@
 import click
 import json
-from collections import namedtuple
 from jinja2 import Environment, FileSystemLoader
 from shutil import copyfile
-from typing import Any, Iterator
 
 from factorio_data import FactorioData
 
@@ -40,61 +38,11 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
                      mods: list[str], output: str, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
-    # TODO None of this should be here...
-    Tech = namedtuple('Tech', ['name', 'time', 'localized_title', 'prerequisites', 'ingredients', 'recipes'])
-    Recipe = namedtuple('Recipe', ['name', 'localized_title', 'ingredients', 'products', 'time'])
-    Item = namedtuple('Item', ['name', 'amount', 'localized_title'])
-
-    def raw_to_item_list(raw_items: list[Any]) -> Iterator[Item]:
-        for raw_item in raw_items:
-            if isinstance(raw_item, dict):
-                name = raw_item['name']
-                if 'amount' in raw_item:
-                    amount = raw_item['amount']
-                else:
-                    amount = f'{raw_item["amount_min"]}–{raw_item["amount_max"]}'
-            else:
-                name, amount = raw_item
-            yield Item(name, amount, data.localize_item(name))
-
-    def raw_to_recipe(raw_recipe: Any) -> Recipe:
-        name = raw_recipe['name']
-
-        if 'normal' in raw_recipe:
-            raw_recipe = raw_recipe['normal']
-
-        if 'results' in raw_recipe:
-            results = raw_recipe['results']
-        else:
-            results = [[raw_recipe['result'], 1]]
-        return Recipe(
-                name=name,
-                localized_title=data.localize_recipe(name),
-                ingredients=list(raw_to_item_list(raw_recipe['ingredients'])),
-                products=list(raw_to_item_list(results)),
-                time=raw_recipe.get('energy_required', 0.5),
-            )
-
-    def raw_to_tech(raw_tech: Any) -> Tech:
-        count = raw_tech['unit']['count']
-        ingredients = [
-                Item(i.name, i.amount * count, i.localized_title)
-                for i in raw_to_item_list(raw_tech['unit']['ingredients'])]
-        return Tech(
-                name=raw_tech['name'],
-                time=raw_tech['unit']['time'] * count,
-                localized_title=data.localize_tech(raw_tech),
-                prerequisites=set(raw_tech.get('prerequisites', [])),
-                ingredients=ingredients,
-                recipes=[all_recipes[effect['recipe']]
-                         for effect in raw_tech.get('effects', [])
-                         if 'recipe' in effect])
-
-    all_recipes = {name: raw_to_recipe(raw_recipe)
-                   for name, raw_recipe in data.raw['recipe'].items()}
+    all_recipes = {name: data.get_recipe(name)
+                   for name in data.raw['recipe']}
 
     all_techs = {
-            name: raw_to_tech(raw_tech)
+            name: data.get_tech(name)
             for name, raw_tech in data.raw['technology'].items()
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
@@ -105,7 +53,7 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
         new_available = sorted(
                 tech.name
                 for tech in all_techs.values()
-                if tech.prerequisites.issubset(prerequisites)
+                if tech.prerequisite_names.issubset(prerequisites)
                 and tech.name not in prerequisites)
         if len(new_available) == 0:
             break
@@ -115,10 +63,10 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
         prerequisites.update(new_available)
 
     for tech in all_techs.values():
-        data.get_tech_icon(tech.name).save(f'{output}/tech_{tech.name}.png')
+        tech.icon.save(f'{output}/tech_{tech.name}.png')
 
-    for recipe in all_recipes:
-        data.get_recipe_icon(recipe).save(f'{output}/recipe_{recipe}.png')
+    for recipe in all_recipes.values():
+        recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
 
     all_items = {ingredient.name
                  for tech in all_techs.values()
@@ -128,7 +76,7 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
                       for item_list in [recipe.ingredients, recipe.products]
                       for item in item_list})
     for item in all_items:
-        data.get_item_icon(item).save(f'{output}/item_{item}.png')
+        data.get_item(item).icon.save(f'{output}/item_{item}.png')
 
     env = Environment(loader=FileSystemLoader('.'), autoescape=True)
     template = env.get_template('tech-tree.html')

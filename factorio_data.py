@@ -2,13 +2,12 @@ import json
 import lupa
 import re
 from collections import defaultdict
-from typing import Any, Match
-from PIL.Image import Image
+from typing import Any, Match, Iterator
 
 from defines import defines
-from icon import get_factorio_icon, get_icon_specs
 from mod_reader import ModReader
 from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
+from factorio_types import ItemWithCount, Recipe, Tech, Item
 
 
 class FactorioData:
@@ -208,8 +207,9 @@ class FactorioData:
 
         return locale
 
-    # TODO: Split out icon and locale stuff. Figure out where `item_types` goes.
-    item_types = [
+    # TODO: Consider creating all of these in advance and just grabbing them from a dict
+    def get_item(self, item_name: str) -> Item:
+        item_types = [
             'active-defense-equipment',
             'ammo',
             'armor',
@@ -237,51 +237,69 @@ class FactorioData:
             'storage-tank',
             'tool',
             'upgrade-item',
-            ]
+        ]
 
-    def get_item_icon(self, item_name: str) -> Image:
-        for item_type in self.item_types:
+        # TODO is this even remotely correct?
+        raw_item = {}
+        for item_type in item_types:
             if item_type in self.raw and item_name in self.raw[item_type]:
-                try:
-                    return get_factorio_icon(self.reader, get_icon_specs(self.raw[item_type][item_name]))
-                except KeyError:
-                    pass
-        raise
+                raw_item.update(self.raw[item_type][item_name])
+        return Item(self, raw_item, item_name, item_type)
 
-    def get_tech_icon(self, tech_name: str) -> Image:
-        return get_factorio_icon(self.reader, get_icon_specs(self.raw['technology'][tech_name]))
-
-    def get_recipe_main_item(self, recipe_name: str) -> str:
-        recipe = self.raw['recipe'][recipe_name]
-
-        if 'normal' in recipe:
-            recipe = recipe['normal']
-
-        if 'result' in recipe:
-            return str(recipe['result'])
-        elif 'main_product' in recipe:
-            return str(recipe['main_product'])
-        else:
-            main_item = recipe['results'][0]
-            if 'name' in main_item:
-                return str(main_item['name'])
+    def raw_to_item_list(self, raw_items: list[Any]) -> Iterator[ItemWithCount]:
+        for raw_item in raw_items:
+            if isinstance(raw_item, dict):
+                name = raw_item['name']
+                if 'amount' in raw_item:
+                    amount = raw_item['amount']
+                else:
+                    amount = f'{raw_item["amount_min"]}–{raw_item["amount_max"]}'
             else:
-                return str(main_item[0])
+                name, amount = raw_item
+            yield ItemWithCount(self, name, amount)
 
-    def get_recipe_icon(self, recipe_name: str) -> Image:
-        recipe = self.raw['recipe'][recipe_name]
-        try:
-            spec = get_icon_specs(recipe)
-            return get_factorio_icon(self.reader, spec)
-        except KeyError:
-            return self.get_item_icon(self.get_recipe_main_item(recipe_name))
+    def get_recipe(self, recipe_name: str) -> Recipe:
+        raw_recipe = self.raw['recipe'][recipe_name]
+
+        if 'normal' in raw_recipe:
+            raw_recipe = raw_recipe['normal']
+
+        if 'results' in raw_recipe:
+            results = raw_recipe['results']
+        else:
+            results = [[raw_recipe['result'], 1]]
+        return Recipe(
+            self,
+            raw_recipe,
+            name=recipe_name,
+            ingredients=list(self.raw_to_item_list(raw_recipe['ingredients'])),
+            products=list(self.raw_to_item_list(results)),
+            time=raw_recipe.get('energy_required', 0.5),
+        )
+
+    def get_tech(self, tech_name: str) -> Tech:
+        raw_tech = self.raw['technology'][tech_name]
+        count = raw_tech['unit']['count']
+        ingredients = [
+            ItemWithCount(self, i.name, i.amount * count)
+            for i in self.raw_to_item_list(raw_tech['unit']['ingredients'])]
+        return Tech(
+            self,
+            raw_tech,
+            name=raw_tech['name'],
+            time=raw_tech['unit']['time'] * count,
+            prerequisite_names=set(raw_tech.get('prerequisites', [])),
+            ingredients=ingredients,
+            recipes=[self.get_recipe(effect['recipe'])
+                     for effect in raw_tech.get('effects', [])
+                     if 'recipe' in effect])
 
     def localize(self, name: str) -> str:
         def get_localized_from_group(match_object: Match[str]) -> str:
             if match_object[1] == 'ENTITY':
                 return self.localize(f'entity-name.{match_object[2]}')
             elif match_object[1] == 'ITEM':
-                return self.localize_item(match_object[2])
+                return self.get_item(match_object[2]).localized_title
             else:
                 return match_object[0]
 
@@ -294,35 +312,6 @@ class FactorioData:
             localized = self.locale[match[1]] + ' ' + match[2]
 
         return str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
-
-    def localize_tech(self, tech: Any) -> str:
-        if 'localised_name' in tech:
-            return str(tech['localised_name'])
-        return self.localize(f'technology-name.{tech["name"]}')
-
-    def localize_item(self, item_name: str) -> str:
-        try:
-            for item_type in self.item_types:
-                if item_type in self.raw and item_name in self.raw[item_type] and \
-                        'localised_name' in self.raw[item_type][item_name]:
-                    return self.localize_array(self.raw[item_type][item_name]['localised_name'])
-                if f'{item_type}-name.{item_name}' in self.locale:
-                    return self.localize(f'{item_type}-name.{item_name}')
-
-            return self.localize(f'entity-name.{item_name}')
-        except:  # noqa
-            return item_name
-
-    def localize_recipe(self, recipe_name: str) -> str:
-        try:
-            if 'localised_name' in self.raw['recipe'][recipe_name]:
-                return self.localize_array(self.raw['recipe'][recipe_name]['localised_name'])
-            if f'recipe-name.{recipe_name}' in self.locale:
-                return self.localize(f'recipe-name.{recipe_name}')
-
-            return self.localize_item(self.get_recipe_main_item(recipe_name))
-        except:  # noqa
-            return recipe_name
 
     def localize_array(self, array: list[Any]) -> str:
         def localize_match(match: Match[str]) -> str:
