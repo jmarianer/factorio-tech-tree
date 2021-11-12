@@ -67,17 +67,12 @@ class Recipe(NamedTuple):
 
     @property
     def _main_item(self) -> Item:
-        recipe = self.raw
-
-        if 'normal' in recipe:
-            recipe = recipe['normal']
-
-        if 'result' in recipe:
-            return self.data.get_item(str(recipe['result']))
-        elif 'main_product' in recipe:
-            return self.data.get_item(str(recipe['main_product']))
+        if 'result' in self.raw:
+            return self.data.get_item(str(self.raw['result']))
+        elif 'main_product' in self.raw:
+            return self.data.get_item(str(self.raw['main_product']))
         else:
-            main_item = recipe['results'][0]
+            main_item = self.raw['results'][0]
             if 'name' in main_item:
                 return self.data.get_item(str(main_item['name']))
             else:
