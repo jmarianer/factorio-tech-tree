@@ -19,6 +19,10 @@ body {
   color: black;
 }
 
+.tooltip .description {
+  padding: 6px 8px;
+}
+
 .tooltip .produces {
   padding: 6px 8px;
   font-weight: bold;

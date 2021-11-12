@@ -17,6 +17,9 @@
           <div class='title'>
             {{ tech.localized_title }}
           </div>
+          <div class='description'>
+            {{ tech.description }}
+          </div>
           {% for ingredient in tech.ingredients %}
           <div class='ingredient'>
             <img class='item-pic' src='item_{{ ingredient.name }}.png'>
@@ -36,6 +39,9 @@
             <div class='tooltip'>
               <div class='title'>
                 {{ recipe.localized_title }} (Recipe)
+              </div>
+              <div class='description'>
+                {{ recipe.description }}
               </div>
               {% for ingredient in recipe.ingredients %}
               <div class='ingredient'>

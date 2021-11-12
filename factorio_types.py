@@ -27,6 +27,18 @@ class Item(NamedTuple):
             return self.name
 
     @property
+    def description(self) -> str:
+        try:
+            if 'localised_description' in self.raw:
+                return self.data.localize_array(self.raw['localised_description'])
+            elif f'{self.type}-description.{self.name}' in self.data.locale:
+                return self.data.localize(f'{self.type}-description.{self.name}')
+            else:
+                return self.data.localize(f'entity-description.{self.name}')
+        except:  # noqa
+            return ''
+
+    @property
     def icon(self) -> Image:
         return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
 
@@ -76,12 +88,24 @@ class Recipe(NamedTuple):
         try:
             if 'localised_name' in self.raw:
                 return self.data.localize_array(self.raw['localised_name'])
-            if f'recipe-name.{self.name}' in self.data.locale:
+            elif f'recipe-name.{self.name}' in self.data.locale:
                 return self.data.localize(f'recipe-name.{self.name}')
-
-            return self.main_item.localized_title
+            else:
+                return self.main_item.localized_title
         except:  # noqa
             return self.name
+
+    @property
+    def description(self) -> str:
+        try:
+            if 'localised_description' in self.raw:
+                return self.data.localize_array(self.raw['localised_description'])
+            elif f'recipe-description.{self.name}' in self.data.locale:
+                return self.data.localize(f'recipe-description.{self.name}')
+            else:
+                return self.main_item.description
+        except:  # noqa
+            return ''
 
     @property
     def icon(self) -> Image:
@@ -109,6 +133,16 @@ class Tech(NamedTuple):
                 return self.data.localize(f'technology-name.{self.name}')
         except:  # noqa
             return self.name
+
+    @property
+    def description(self) -> str:
+        try:
+            if 'localised_description' in self.raw:
+                return self.data.localize_array(self.raw['localised_description'])
+            else:
+                return self.data.localize(f'technology-description.{self.name}')
+        except:  # noqa
+            return ''
 
     @property
     def icon(self) -> Image:

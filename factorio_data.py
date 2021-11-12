@@ -262,7 +262,7 @@ class FactorioData:
         raw_recipe = self.raw['recipe'][recipe_name]
 
         if 'normal' in raw_recipe:
-            raw_recipe = raw_recipe['normal']
+            raw_recipe.update(raw_recipe['normal'])
 
         if 'results' in raw_recipe:
             results = raw_recipe['results']
