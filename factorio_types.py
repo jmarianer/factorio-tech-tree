@@ -18,7 +18,7 @@ class Item(NamedTuple):
     def localized_title(self) -> str:
         try:
             if 'localised_name' in self.raw:
-                return self.data.localize_array(self.raw)
+                return self.data.localize_array(self.raw['localised_name'])
             elif f'{self.type}-name.{self.name}' in self.data.locale:
                 return self.data.localize(f'{self.type}-name.{self.name}')
             else:
@@ -75,7 +75,7 @@ class Recipe(NamedTuple):
     def localized_title(self) -> str:
         try:
             if 'localised_name' in self.raw:
-                return self.data.localize_array(self.raw)
+                return self.data.localize_array(self.raw['localised_name'])
             if f'recipe-name.{self.name}' in self.data.locale:
                 return self.data.localize(f'recipe-name.{self.name}')
 
@@ -103,8 +103,8 @@ class Tech(NamedTuple):
     @property
     def localized_title(self) -> str:
         try:
-            if 'localised_name' in self.data.raw['technology'][self.name]:
-                return self.data.localize_array(self.data.raw['technology'][self.name])
+            if 'localised_name' in self.raw:
+                return self.data.localize_array(self.raw['localised_name'])
             else:
                 return self.data.localize(f'technology-name.{self.name}')
         except:  # noqa

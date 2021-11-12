@@ -210,6 +210,11 @@ class FactorioData:
     # TODO: Consider creating all of these in advance and just grabbing them from a dict
     def get_item(self, item_name: str) -> Item:
         item_types = [
+            'item',
+            'item-with-entity-data',
+            'item-with-inventory',
+            'item-with-label',
+            'item-with-tags',
             'active-defense-equipment',
             'ammo',
             'armor',
@@ -223,11 +228,6 @@ class FactorioData:
             'equipment',
             'fluid',
             'gun',
-            'item',
-            'item-with-entity-data',
-            'item-with-inventory',
-            'item-with-label',
-            'item-with-tags',
             'mining-tool',
             'module',
             'rail-planner',
@@ -241,7 +241,7 @@ class FactorioData:
 
         # TODO is this even remotely correct?
         raw_item = {}
-        for item_type in item_types:
+        for item_type in reversed(item_types):
             if item_type in self.raw and item_name in self.raw[item_type]:
                 raw_item.update(self.raw[item_type][item_name])
         return Item(self, raw_item, item_name, item_type)
