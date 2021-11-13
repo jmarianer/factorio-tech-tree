@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>{{ recipe.localized_title }} (Recipe)</title>
+    <link rel='stylesheet' href='tech-tree.css' />
+  </head>
+  <body class='recipe'>
+    <h1>{{ recipe.localized_title }}</h1>
+    <div class='description'>
+      {{ recipe.description }}
+    </div>
+    <h2>Inputs:</h2>
+    {% for ingredient in recipe.ingredients %}
+    <div class='ingredient'>
+      <a href='item_{{ ingredient.name }}.html'>
+        <img class='item-pic' src='item_{{ ingredient.name }}.png'>
+        {{ ingredient.amount }} x {{ ingredient.localized_title }}
+      </a>
+    </div>
+    {% endfor %}
+    <h2>Outputs:</h2>
+    {% for product in recipe.products %}
+    <div class='product'>
+      <a href='item_{{ product.name }}.html'>
+        <img class='item-pic' src='item_{{ product.name }}.png'>
+        {{ product.amount }} x {{ product.localized_title }}
+      </a>
+    </div>
+    {% endfor %}
+    <h2>Crafted in:</h2>
+    {% for item, time in recipe.crafted_in %}
+    <div class='product'>
+      <a href='item_{{ item.name }}.html'>
+        <img class='item-pic' src='item_{{ item.name }}.png'>
+        {{ item.localized_title }} ({{ time | round(2) }} seconds)
+      </a>
+    </div>
+    {% endfor %}
+  </body>
+</html>

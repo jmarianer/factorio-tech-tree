@@ -13,6 +13,10 @@ from factorio_types import ItemWithCount, Recipe, Tech, Item
 class FactorioData:
     def __init__(self, base_dir: str, mod_cache_dir: str, mods: list[str],
                  username: str, token: str, quiet: bool = False):
+        self.character = Item(
+            self, None, 'character', 'character'
+        )
+
         self.base_dir = base_dir
         self.reader = ModReader(base_dir, mod_cache_dir, username, token)
         self.quiet = quiet
@@ -20,6 +24,44 @@ class FactorioData:
         self.mod_list, self.mod_versions = self._populate_mod_list(set(mods))
         self.locale = self._init_locale()
         self.raw = self._read_raw_data()
+
+        self.item_types = [
+            'item',
+            'item-with-entity-data',
+            'item-with-inventory',
+            'item-with-label',
+            'item-with-tags',
+            'active-defense-equipment',
+            'ammo',
+            'armor',
+            'assembling-machine',
+            'blueprint',
+            'blueprint-book',
+            'boiler',
+            'capsule',
+            'copy-paste-tool',
+            'deconstruction-item',
+            'equipment',
+            'fluid',
+            'gun',
+            'mining-tool',
+            'module',
+            'rail-planner',
+            'repair-tool',
+            'selection-tool',
+            'spidertron-remote',
+            'storage-tank',
+            'tool',
+            'upgrade-item',
+        ]
+        self.items = {name: self._get_item(name)
+                      for item_type in self.item_types
+                      for name in self.raw.get(item_type, [])}
+        self.recipes = {name: self._get_recipe(name)
+                        for name in self.raw['recipe']}
+        self.technologies = {name: self._get_tech(name)
+                             for name in self.raw['technology']
+                             if 'count' in self.raw['technology'][name]['unit']}
 
     def _read_raw_data(self) -> Any:
         def maybe_execute(path: str) -> Any:
@@ -207,41 +249,13 @@ class FactorioData:
 
         return locale
 
-    # TODO: Consider creating all of these in advance and just grabbing them from a dict
     def get_item(self, item_name: str) -> Item:
-        item_types = [
-            'item',
-            'item-with-entity-data',
-            'item-with-inventory',
-            'item-with-label',
-            'item-with-tags',
-            'active-defense-equipment',
-            'ammo',
-            'armor',
-            'assembling-machine',
-            'blueprint',
-            'blueprint-book',
-            'boiler',
-            'capsule',
-            'copy-paste-tool',
-            'deconstruction-item',
-            'equipment',
-            'fluid',
-            'gun',
-            'mining-tool',
-            'module',
-            'rail-planner',
-            'repair-tool',
-            'selection-tool',
-            'spidertron-remote',
-            'storage-tank',
-            'tool',
-            'upgrade-item',
-        ]
+        return self.items[item_name]
 
+    def _get_item(self, item_name: str) -> Item:
         # TODO is this even remotely correct?
         raw_item = {}
-        for item_type in reversed(item_types):
+        for item_type in reversed(self.item_types):
             if item_type in self.raw and item_name in self.raw[item_type]:
                 raw_item.update(self.raw[item_type][item_name])
         return Item(self, raw_item, item_name, item_type)
@@ -259,6 +273,9 @@ class FactorioData:
             yield ItemWithCount(self, name, amount)
 
     def get_recipe(self, recipe_name: str) -> Recipe:
+        return self.recipes[recipe_name]
+
+    def _get_recipe(self, recipe_name: str) -> Recipe:
         raw_recipe = self.raw['recipe'][recipe_name]
 
         if 'normal' in raw_recipe:
@@ -275,9 +292,13 @@ class FactorioData:
             ingredients=list(self._raw_to_item_list(raw_recipe['ingredients'])),
             products=list(self._raw_to_item_list(results)),
             time=raw_recipe.get('energy_required', 0.5),
+            crafting_category=raw_recipe.get('crafting_category', 'crafting'),
         )
 
     def get_tech(self, tech_name: str) -> Tech:
+        return self.technologies[tech_name]
+
+    def _get_tech(self, tech_name: str) -> Tech:
         raw_tech = self.raw['technology'][tech_name]
         count = raw_tech['unit']['count']
         ingredients = [
@@ -323,3 +344,18 @@ class FactorioData:
             return ''.join(self.localize_array(x) for x in array)
         else:
             return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
+
+    def get_crafting_machines_for(self, crafting_category: str) -> Iterator[tuple[Item, float]]:
+        crafting_machine_types = [
+            "assembling-machine",
+            "furnace",
+            "rocket-silo"
+        ]
+
+        if crafting_category == 'crafting':
+            yield self.character, 1
+
+        for crafter_type in crafting_machine_types:
+            for machine_name, machine in sorted(self.raw[crafter_type].items()):
+                if crafting_category in machine['crafting_categories']:
+                    yield self.get_item(machine_name), machine['crafting_speed']

@@ -63,10 +63,12 @@
               </div>
               {% endfor %}
             </div>
-            <img
-                class='item-pic'
-                id='item_{{ recipe.name }}'
-                src='recipe_{{ recipe.name }}.png'>
+            <a href='recipe_{{ recipe.name }}.html'>
+              <img
+                  class='item-pic'
+                  id='recipe_{{ recipe.name }}'
+                  src='recipe_{{ recipe.name }}.png'>
+            </a>
           </div>
           {% endfor %}
           <br />

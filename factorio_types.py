@@ -1,4 +1,5 @@
-from typing import NamedTuple, TYPE_CHECKING, Any
+from __future__ import annotations
+from typing import NamedTuple, TYPE_CHECKING, Any, Iterator
 from PIL.Image import Image
 
 from icon import get_factorio_icon, get_icon_specs
@@ -42,6 +43,18 @@ class Item(NamedTuple):
     def icon(self) -> Image:
         return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
 
+    @property
+    def used_in(self) -> Iterator[Recipe]:
+        return (r
+                for _, r in sorted(self.data.recipes.items())
+                if self.name in (i.name for i in r.ingredients))
+
+    @property
+    def produced_in(self) -> Iterator[Recipe]:
+        return (r
+                for _, r in sorted(self.data.recipes.items())
+                if self.name in (p.name for p in r.products))
+
 
 class ItemWithCount(NamedTuple):
     data: FactorioData
@@ -64,6 +77,7 @@ class Recipe(NamedTuple):
     ingredients: list[ItemWithCount]
     products: list[ItemWithCount]
     time: int
+    crafting_category: str
 
     @property
     def _main_item(self) -> Item:
@@ -108,6 +122,11 @@ class Recipe(NamedTuple):
             return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
         except KeyError:
             return self._main_item.icon
+
+    @property
+    def crafted_in(self) -> list[tuple[Item, float]]:
+        return [(item, self.time / speed)
+                for item, speed in self.data.get_crafting_machines_for(self.crafting_category)]
 
 
 class Tech(NamedTuple):

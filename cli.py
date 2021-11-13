@@ -62,11 +62,18 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
 
         prerequisites.update(new_available)
 
+    env = Environment(loader=FileSystemLoader('.'), autoescape=True)
+    tech_tree_template = env.get_template('tech-tree.html')
+    recipe_template = env.get_template('recipe.html')
+    item_template = env.get_template('item.html')
+
     for tech in all_techs.values():
         tech.icon.save(f'{output}/tech_{tech.name}.png')
 
     for recipe in all_recipes.values():
         recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
+        with open(f'{output}/recipe_{recipe.name}.html', 'w') as index:
+            index.write(recipe_template.render(recipe=recipe))
 
     all_items = {ingredient.name
                  for tech in all_techs.values()
@@ -77,11 +84,11 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
                       for item in item_list})
     for item in all_items:
         data.get_item(item).icon.save(f'{output}/item_{item}.png')
+        with open(f'{output}/item_{item}.html', 'w') as index:
+            index.write(item_template.render(item=data.get_item(item)))
 
-    env = Environment(loader=FileSystemLoader('.'), autoescape=True)
-    template = env.get_template('tech-tree.html')
     with open(f'{output}/index.html', 'w') as index:
-        index.write(template.render(tech_rows=rows))
+        index.write(tech_tree_template.render(tech_rows=rows))
 
     copyfile('tech-tree.css', f'{output}/tech-tree.css')
     copyfile('tech-tree.js', f'{output}/tech-tree.js')
