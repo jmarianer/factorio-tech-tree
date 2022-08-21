@@ -21,7 +21,10 @@ class FactorioData:
         self.reader = ModReader(base_dir, mod_cache_dir, username, token)
         self.quiet = quiet
 
-        self.mod_list, self.mod_versions = self._populate_mod_list(set(mods))
+        self.mod_list, self.mod_info = self._populate_mod_list(set(mods))
+        self.mod_versions = {
+                name: info.get('version', None)
+                for name, info in self.mod_info.items()}
         self.locale = self._init_locale()
         self.raw = self._read_raw_data()
 
@@ -192,25 +195,24 @@ class FactorioData:
         if not self.quiet:
             print(lua_table_to_python(value))
 
-    def _populate_mod_list(self, mods: set[str]) -> tuple[list[str], dict[str, str]]:
+    def _populate_mod_list(self, mods: set[str]) -> tuple[list[str], dict[str, Any]]:
         mods.update({'base', 'core'})
 
         # Get all mods including dependencies
-        mod_versions: dict[str, str] = {}
+        mod_info: dict[str, Any] = {}
         load_order_constraints: dict[str, list[str]] = {}
         while True:
-            new_mods = mods - mod_versions.keys()
+            new_mods = mods - mod_info.keys()
             if len(new_mods) == 0:
                 break
 
             for mod in new_mods:
                 self.reader.add_mod(mod)
-                info_json = json.loads(self.reader.get_text(f'__{mod}__/info.json'))
-                mod_versions[mod] = info_json.get('version', None)
+                mod_info[mod] = json.loads(self.reader.get_text(f'__{mod}__/info.json'))
 
                 required_dependencies = []
                 load_order_constraints[mod] = []
-                for dependency_spec in info_json.get('dependencies', []):
+                for dependency_spec in mod_info[mod].get('dependencies', []):
                     prefix, dep, _ = parse_dependencies(dependency_spec)
                     if prefix in {None, '~'}:
                         required_dependencies.append(dep)
@@ -231,7 +233,7 @@ class FactorioData:
                 break
             mod_list.extend(new_mods)
 
-        return mod_list, mod_versions
+        return mod_list, mod_info
 
     def _init_locale(self) -> dict[str, str]:
         locale: dict[str, str] = {}
