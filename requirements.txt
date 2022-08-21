@@ -5,3 +5,5 @@ click
 mypy
 types-Pillow
 pycodestyle
+bbcode
+MarkupSafe

@@ -9,7 +9,7 @@
     <h1>{{ item.localized_title }}</h1>
     <img class='item-pic-large' src='item_{{ item.name }}.png'>
     <div class='description'>
-      {{ item.description }}
+      {{ item.description | bbcode }}
     </div>
     <h2>Produced in</h2>
     {% for recipe in item.produced_in %}

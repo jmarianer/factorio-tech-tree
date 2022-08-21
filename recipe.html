@@ -8,7 +8,7 @@
   <body class='recipe'>
     <h1>{{ recipe.localized_title }}</h1>
     <div class='description'>
-      {{ recipe.description }}
+      {{ recipe.description | bbcode }}
     </div>
     <h2>Inputs:</h2>
     {% for ingredient in recipe.ingredients %}

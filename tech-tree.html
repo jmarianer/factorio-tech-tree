@@ -18,7 +18,7 @@
             {{ tech.localized_title }}
           </div>
           <div class='description'>
-            {{ tech.description }}
+            {{ tech.description | bbcode }}
           </div>
           {% for ingredient in tech.ingredients %}
           <div class='ingredient'>
@@ -41,7 +41,7 @@
                 {{ recipe.localized_title }} (Recipe)
               </div>
               <div class='description'>
-                {{ recipe.description }}
+                {{ recipe.description | bbcode }}
               </div>
               {% for ingredient in recipe.ingredients %}
               <div class='ingredient'>
