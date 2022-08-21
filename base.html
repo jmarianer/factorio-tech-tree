@@ -1,0 +1,36 @@
+{% macro render_tech(tech) %}
+  <a class='tech' href="tech_{{ tech.name }}.html">
+    <img src='tech_{{ tech.name }}.png'>
+    {{ tech.localized_title }}
+  </a>
+{% endmacro %}
+{% macro render_recipe(recipe) %}
+  <a class='recipe' href="recipe_{{ recipe.name }}.html">
+    <img src='recipe_{{ recipe.name }}.png'>
+    {{ recipe.localized_title }}
+  </a>
+{% endmacro %}
+{% macro render_item(item) %}
+  <a class='item' href="item_{{ item.name }}.html">
+    <img src='item_{{ item.name }}.png'>
+    {{ item.localized_title }}
+  </a>
+{% endmacro %}
+{% macro render_item_with_count(item_with_count) %}
+  <a class='item' href="item_{{ item_with_count.name }}.html">
+    {{ item_with_count.amount }} x 
+    <img src='item_{{ item_with_count.name }}.png'>
+    {{ item_with_count.localized_title }}
+  </a>
+{% endmacro %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Factorio data</title>
+    <link rel='stylesheet' href='factorio.css' />
+  </head>
+  <body>
+    {% block body %}{% endblock %}
+  </body>
+</html>

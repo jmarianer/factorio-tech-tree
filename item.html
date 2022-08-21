@@ -1,33 +1,15 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>{{ item.localized_title }}</title>
-    <link rel='stylesheet' href='tech-tree.css' />
-  </head>
-  <body class='item'>
-    <h1>{{ item.localized_title }}</h1>
-    <img class='item-pic-large' src='item_{{ item.name }}.png'>
-    <div class='description'>
-      {{ item.description | bbcode }}
-    </div>
-    <h2>Produced in</h2>
-    {% for recipe in item.produced_in %}
-    <div class='recipe'>
-      <a href='recipe_{{ recipe.name }}.html'>
-        <img class='item-pic' src='recipe_{{ recipe.name }}.png'>
-        {{ recipe.localized_title }}
-      </a>
-    </div>
-    {% endfor %}
-    <h2>Used in</h2>
-    {% for recipe in item.used_in %}
-    <div class='recipe'>
-      <a href='recipe_{{ recipe.name }}.html'>
-        <img class='item-pic' src='recipe_{{ recipe.name }}.png'>
-        {{ recipe.localized_title }}
-      </a>
-    </div>
-    {% endfor %}
-  </body>
-</html>
+{% extends 'base.html' %}
+{% block body %}
+  <h1>Item: {{ item.localized_title }}</h1>
+  <img src='item_{{ item.name }}.png'>
+  <h2>Description</h2>
+  {{ item.description | bbcode }}
+  <h2>Produced in</h2>
+  {% for recipe in item.produced_in %}
+  {{ render_recipe(recipe) }}
+  {% endfor %}
+  <h2>Used in</h2>
+  {% for recipe in item.used_in %}
+  {{ render_recipe(recipe) }}
+  {% endfor %}
+{% endblock %}

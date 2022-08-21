@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block body %}
+  <h1>Tech: {{ tech.localized_title }}</h1>
+  <img src='tech_{{ tech.name }}.png'>
+  <h2>Description</h2>
+  {{ tech.description | bbcode }}
+  <h2>Cost</h2>
+  {% for ingredient in tech.ingredients %}
+  {{ render_item_with_count(ingredient) }}
+  {% endfor %}
+  <h2>Requires</h2>
+  {% for prereq in prerequisites %}
+  {{ render_tech(prereq) }}
+  {% endfor %}
+  <h2>Unlocks</h2>
+  {% for recipe in tech.recipes %}
+  {{ render_recipe(recipe) }}
+  {% endfor %}
+{% endblock %}

@@ -1,10 +1,6 @@
-from typing import Any
-
-import bbcode
 import click
 import json
-from jinja2 import Environment, FileSystemLoader
-from markupsafe import Markup
+from jinja_helpers import get_jinja_environment
 from shutil import copyfile
 
 from factorio_data import FactorioData
@@ -38,8 +34,8 @@ def dump_data(mod_cache_dir: str, factorio_base: str, factorio_username: str, fa
 @click.option('--mods', multiple=True)
 @click.option('--output', default='output')
 @click.option('-q', '--quiet', is_flag=True)
-def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: str, factorio_token: str,
-                     mods: list[str], output: str, quiet: bool) -> None:
+def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, factorio_token: str,
+                mods: list[str], output: str, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
     all_recipes = {name: data.get_recipe(name)
@@ -51,51 +47,6 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
-    prerequisites: set[str] = set()
-    rows = []
-    while True:
-        new_available = sorted(
-                tech.name
-                for tech in all_techs.values()
-                if tech.prerequisite_names.issubset(prerequisites)
-                and tech.name not in prerequisites)
-        if len(new_available) == 0:
-            break
-
-        rows.append([all_techs[t] for t in new_available])
-
-        prerequisites.update(new_available)
-
-    def font(_tag_name: str, value: str, options: dict[str, str], _parent: Any, _context: Any) -> str:
-        if options['font'] == 'default-bold':
-            return f'<b>{value}</b>'
-        if options['font'] == 'default-semibold':
-            return f'<b>{value}</b>'
-        if options['font'] == 'default-tiny-bold':
-            return f'<b>{value}</b>'
-        raise
-
-    parser = bbcode.Parser()
-    parser.add_formatter('font', font)
-
-    def render_localized_text(text: str) -> Markup:
-        return Markup(parser.format(text.replace('\\n', '\n')))
-
-    env = Environment(loader=FileSystemLoader('.'), autoescape=True)
-    env.filters['bbcode'] = render_localized_text
-
-    tech_tree_template = env.get_template('tech-tree.html')
-    recipe_template = env.get_template('recipe.html')
-    item_template = env.get_template('item.html')
-
-    for tech in all_techs.values():
-        tech.icon.save(f'{output}/tech_{tech.name}.png')
-
-    for recipe in all_recipes.values():
-        recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
-        with open(f'{output}/recipe_{recipe.name}.html', 'w') as index:
-            index.write(recipe_template.render(recipe=recipe))
-
     all_items = {ingredient.name
                  for tech in all_techs.values()
                  for ingredient in tech.ingredients}
@@ -103,16 +54,49 @@ def create_tech_tree(mod_cache_dir: str, factorio_base: str, factorio_username: 
                       for recipe in all_recipes.values()
                       for item_list in [recipe.ingredients, recipe.products]
                       for item in item_list})
-    for item in all_items:
-        data.get_item(item).icon.save(f'{output}/item_{item}.png')
-        with open(f'{output}/item_{item}.html', 'w') as index:
-            index.write(item_template.render(item=data.get_item(item)))
+    techs_in_order = []
+    while True:
+        new_available = sorted(
+                tech.name
+                for tech in all_techs.values()
+                if tech.prerequisite_names.issubset(techs_in_order)
+                and tech.name not in techs_in_order)
+        if len(new_available) == 0:
+            break
 
-    with open(f'{output}/index.html', 'w') as index:
-        index.write(tech_tree_template.render(tech_rows=rows))
+        techs_in_order.extend(new_available)
 
-    copyfile('tech-tree.css', f'{output}/tech-tree.css')
-    copyfile('tech-tree.js', f'{output}/tech-tree.js')
+    env = get_jinja_environment()
+    def write_template(filename, template, **kwargs):
+        with open(f'{output}/{filename}', 'w') as file:
+            file.write(template.render(**kwargs))
+
+    index_template = env.get_template('index.html')
+    tech_template = env.get_template('tech.html')
+    recipe_template = env.get_template('recipe.html')
+    item_template = env.get_template('item.html')
+
+    for tech in all_techs.values():
+        tech.icon.save(f'{output}/tech_{tech.name}.png')
+        write_template(f'tech_{tech.name}.html', tech_template,
+                prerequisites=[all_techs[p] for p in tech.prerequisite_names if p in all_techs],
+                tech=tech)
+
+    for recipe in all_recipes.values():
+        recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
+        write_template(f'recipe_{recipe.name}.html', recipe_template, recipe=recipe)
+
+    for item_name in all_items:
+        item = data.get_item(item_name)
+        item.icon.save(f'{output}/item_{item_name}.png')
+        write_template(f'item_{item_name}.html', item_template, item=item)
+
+    write_template('index.html', index_template,
+            mod_list=sorted(data.mod_list, key=lambda m: data.mod_info[m]['title']),
+            mod_info=data.mod_info,
+            techs=(all_techs[t] for t in techs_in_order))
+
+    copyfile('factorio.css', f'{output}/factorio.css')
     copyfile('clock-icon.png', f'{output}/clock-icon.png')
 
 

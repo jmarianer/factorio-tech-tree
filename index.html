@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block body %}
+  <h1>Modlist</h1>
+  <ul>
+    {% for m in mod_list %}
+    <li>
+      {{ mod_info[m]['title'] }}
+      {% if 'version' in mod_info[m] %}
+        v{{ mod_info[m]['version'] }}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <h1>Technology list</h1>
+  <div class='tech-list'>
+    {% for tech in techs %}
+    {{ render_tech(tech) }}
+    {% endfor %}
+  </div>
+{% endblock %}
