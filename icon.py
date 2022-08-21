@@ -21,12 +21,18 @@ class Layer(NamedTuple):
 
 
 class IconSpec(NamedTuple):
-    size: int
+    size: Optional[int]
     layers: list[Layer]
 
 
 def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
     icon_size = icon_spec.size
+    if icon_size is None:
+        if len(icon_spec.layers) == 1:
+            return Image.open(io.BytesIO(reader.get_binary(icon_spec.layers[0].icon_path)))
+        else:
+            raise
+
     icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
     x1: Optional[float] = None
     x2: Optional[float] = None
@@ -113,8 +119,5 @@ def get_icon_specs(a_dict: Any) -> IconSpec:
             if layer.icon_size is not None:
                 size = layer.icon_size
                 break
-
-    if size is None:
-        raise
 
     return IconSpec(size, layers)
