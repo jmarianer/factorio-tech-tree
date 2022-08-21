@@ -1,6 +1,5 @@
-# ./env is assumed to export the FACTORIO_BASE, FACTORIO_USERNAME and
-# FACTORIO_TOKEN variables, and is never checked into git for obvious reasons.
-source ./env
+# The FACTORIO_BASE, FACTORIO_USERNAME and FACTORIO_TOKEN variables must be
+# exported in the calling shell.
 mkdir -p output/{base,spacex,ind,angelbobs,k2spacex}
 
 python cli.py dump-data -q --output output/base.json
