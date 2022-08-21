@@ -287,6 +287,7 @@ class FactorioData:
             results = raw_recipe['results']
         else:
             results = [[raw_recipe['result'], 1]]
+
         return Recipe(
             self,
             raw_recipe,
@@ -294,7 +295,7 @@ class FactorioData:
             ingredients=list(self._raw_to_item_list(raw_recipe['ingredients'])),
             products=list(self._raw_to_item_list(results)),
             time=raw_recipe.get('energy_required', 0.5),
-            crafting_category=raw_recipe.get('crafting_category', 'crafting'),
+            crafting_category=raw_recipe.get('category', 'crafting'),
         )
 
     def get_tech(self, tech_name: str) -> Tech:
@@ -347,6 +348,7 @@ class FactorioData:
         else:
             return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
 
+    # TODO this should use entities, not items!
     def get_crafting_machines_for(self, crafting_category: str) -> Iterator[tuple[Item, float]]:
         crafting_machine_types = [
             "assembling-machine",
@@ -360,4 +362,13 @@ class FactorioData:
         for crafter_type in crafting_machine_types:
             for machine_name, machine in sorted(self.raw[crafter_type].items()):
                 if crafting_category in machine['crafting_categories']:
-                    yield self.get_item(machine_name), machine['crafting_speed']
+                    if 'placeable_by' in machine:
+                        name = machine['placeable_by']['item']
+                    else:
+                        name = machine_name
+
+                    try:
+                        yield self.get_item(name), machine['crafting_speed']
+                    except KeyError:
+                        # TODO
+                        pass
