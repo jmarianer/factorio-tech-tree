@@ -1,8 +1,10 @@
 import click
 import json
-from jinja_helpers import get_jinja_environment
+from jinja2 import Template
 from shutil import copyfile
+from typing import Any
 
+from jinja_helpers import get_jinja_environment
 from factorio_data import FactorioData
 
 
@@ -54,7 +56,7 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
                       for recipe in all_recipes.values()
                       for item_list in [recipe.ingredients, recipe.products]
                       for item in item_list})
-    techs_in_order = []
+    techs_in_order: list[str] = []
     while True:
         new_available = sorted(
                 tech.name
@@ -67,7 +69,8 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
         techs_in_order.extend(new_available)
 
     env = get_jinja_environment()
-    def write_template(filename, template, **kwargs):
+
+    def write_template(filename: str, template: Template, **kwargs: Any) -> None:
         with open(f'{output}/{filename}', 'w') as file:
             file.write(template.render(**kwargs))
 
@@ -78,7 +81,8 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
 
     for tech in all_techs.values():
         tech.icon.save(f'{output}/tech_{tech.name}.png')
-        write_template(f'tech_{tech.name}.html', tech_template,
+        write_template(
+                f'tech_{tech.name}.html', tech_template,
                 prerequisites=[all_techs[p] for p in tech.prerequisite_names if p in all_techs],
                 tech=tech)
 
@@ -91,8 +95,10 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
         item.icon.save(f'{output}/item_{item_name}.png')
         write_template(f'item_{item_name}.html', item_template, item=item)
 
-    write_template('index.html', index_template,
-            mod_list=sorted(data.mod_list, key=lambda m: data.mod_info[m]['title']),
+    write_template(
+            'index.html', index_template,
+            # TODO make mod_info[m] a NamedTuple
+            mod_list=sorted(data.mod_list, key=lambda m: str(data.mod_info[m]['title'])),
             mod_info=data.mod_info,
             techs=(all_techs[t] for t in techs_in_order))
 
