@@ -30,32 +30,38 @@ class FactorioData:
 
         self.item_types = [
             'item',
-            'item-with-entity-data',
-            'item-with-inventory',
-            'item-with-label',
-            'item-with-tags',
-            'active-defense-equipment',
             'ammo',
-            'armor',
-            'assembling-machine',
-            'blueprint',
-            'blueprint-book',
-            'boiler',
             'capsule',
+            'gun',
+            'item-with-entity-data',
+            'item-with-label',
+            'item-with-inventory',
+            'blueprint-book',
+            'item-with-tags',
+            'selection-tool',
+            'blueprint',
             'copy-paste-tool',
             'deconstruction-item',
-            'equipment',
-            'fluid',
-            'gun',
-            'mining-tool',
+            'upgrade-item',
             'module',
             'rail-planner',
-            'repair-tool',
-            'selection-tool',
             'spidertron-remote',
-            'storage-tank',
             'tool',
-            'upgrade-item',
+            'armor',
+            'mining-tool',
+            'repair-tool',
+
+            # XXX Not sure if "fluid" should count as "item".
+            'fluid',
+        ]
+
+        self.entity_types = [
+            'active-defense-equipment',
+            'assembling-machine',
+            'boiler',
+            'equipment',
+            'fluid',
+            'storage-tank',
         ]
         self.items = {name: self._get_item(name)
                       for item_type in self.item_types
