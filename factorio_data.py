@@ -14,7 +14,7 @@ class FactorioData:
     def __init__(self, base_dir: str, mod_cache_dir: str, mods: list[str],
                  username: str, token: str, quiet: bool = False):
         self.character = Item(
-            self, None, 'character', 'character'
+                self, dict(name='character', type='character')
         )
 
         self.base_dir = base_dir
@@ -66,10 +66,10 @@ class FactorioData:
         self.items = {name: self._get_item(name)
                       for item_type in self.item_types
                       for name in self.raw.get(item_type, [])}
-        self.recipes = {name: self._get_recipe(name)
-                        for name in self.raw['recipe']}
-        self.technologies = {name: self._get_tech(name)
-                             for name in self.raw['technology']
+        self.recipes = {name: Recipe(self, value)
+                        for name, value in self.raw['recipe'].items()}
+        self.technologies = {name: Tech(self, value)
+                             for name, value in self.raw['technology'].items()
                              if 'count' in self.raw['technology'][name]['unit']}
 
     def _read_raw_data(self) -> Any:
@@ -257,79 +257,21 @@ class FactorioData:
 
         return locale
 
-    def get_item(self, item_name: str) -> Item:
-        return self.items[item_name]
-
     def _get_item(self, item_name: str) -> Item:
         # TODO is this even remotely correct?
         raw_item = {}
         for item_type in reversed(self.item_types):
             if item_type in self.raw and item_name in self.raw[item_type]:
                 raw_item.update(self.raw[item_type][item_name])
-        return Item(self, raw_item, item_name, item_type)
-
-    def _raw_to_item_list(self, raw_items: list[Any]) -> Iterator[ItemWithCount]:
-        for raw_item in raw_items:
-            if isinstance(raw_item, dict):
-                name = raw_item['name']
-                if 'amount' in raw_item:
-                    amount = raw_item['amount']
-                else:
-                    amount = f'{raw_item["amount_min"]}–{raw_item["amount_max"]}'
-            else:
-                name, amount = raw_item
-            yield ItemWithCount(self, name, amount)
-
-    def get_recipe(self, recipe_name: str) -> Recipe:
-        return self.recipes[recipe_name]
-
-    def _get_recipe(self, recipe_name: str) -> Recipe:
-        raw_recipe = self.raw['recipe'][recipe_name]
-
-        if 'normal' in raw_recipe:
-            raw_recipe.update(raw_recipe['normal'])
-
-        if 'results' in raw_recipe:
-            results = raw_recipe['results']
-        else:
-            results = [[raw_recipe['result'], 1]]
-
-        return Recipe(
-            self,
-            raw_recipe,
-            name=recipe_name,
-            ingredients=list(self._raw_to_item_list(raw_recipe['ingredients'])),
-            products=list(self._raw_to_item_list(results)),
-            time=raw_recipe.get('energy_required', 0.5),
-            crafting_category=raw_recipe.get('category', 'crafting'),
-        )
-
-    def get_tech(self, tech_name: str) -> Tech:
-        return self.technologies[tech_name]
-
-    def _get_tech(self, tech_name: str) -> Tech:
-        raw_tech = self.raw['technology'][tech_name]
-        count = raw_tech['unit']['count']
-        ingredients = [
-            ItemWithCount(self, i.name, i.amount * count)
-            for i in self._raw_to_item_list(raw_tech['unit']['ingredients'])]
-        return Tech(
-            self,
-            raw_tech,
-            name=raw_tech['name'],
-            time=int(raw_tech['unit']['time']) * int(count),
-            prerequisite_names=set(raw_tech.get('prerequisites', [])),
-            ingredients=ingredients,
-            recipes=[self.get_recipe(effect['recipe'])
-                     for effect in raw_tech.get('effects', [])
-                     if 'recipe' in effect])
+        return Item(self, raw_item)
 
     def localize(self, name: str) -> str:
         def get_localized_from_group(match_object: Match[str]) -> str:
             if match_object[1] == 'ENTITY':
                 return self.localize(f'entity-name.{match_object[2]}')
             elif match_object[1] == 'ITEM':
-                return self.get_item(match_object[2]).localized_title
+                item_name = match_object[2]
+                return self.items[item_name].localized_title
             else:
                 return match_object[0]
 
@@ -374,7 +316,7 @@ class FactorioData:
                         name = machine_name
 
                     try:
-                        yield self.get_item(name), machine['crafting_speed']
+                        yield self.items[name], machine['crafting_speed']
                     except KeyError:
                         # TODO
                         pass

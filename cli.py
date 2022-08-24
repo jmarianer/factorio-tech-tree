@@ -40,22 +40,17 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
                 mods: list[str], output: str, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
-    all_recipes = {name: data.get_recipe(name)
-                   for name in data.raw['recipe']}
+    all_recipes = {name: data.recipes[name]
+                   for name in data.recipes}
 
     all_techs = {
-            name: data.get_tech(name)
+            name: data.technologies[name]
             for name, raw_tech in data.raw['technology'].items()
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
-    all_items = {ingredient.name
-                 for tech in all_techs.values()
-                 for ingredient in tech.ingredients}
-    all_items.update({item.name
-                      for recipe in all_recipes.values()
-                      for item_list in [recipe.ingredients, recipe.products]
-                      for item in item_list})
+    all_items = data.items
+
     techs_in_order: list[str] = []
     while True:
         new_available = sorted(
@@ -90,10 +85,9 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
         recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
         write_template(f'recipe_{recipe.name}.html', recipe_template, recipe=recipe)
 
-    for item_name in all_items:
-        item = data.get_item(item_name)
-        item.icon.save(f'{output}/item_{item_name}.png')
-        write_template(f'item_{item_name}.html', item_template, item=item)
+    for item in all_items.values():
+        item.icon.save(f'{output}/item_{item.name}.png')
+        write_template(f'item_{item.name}.html', item_template, item=item)
 
     write_template(
             'index.html', index_template,
