@@ -44,24 +44,46 @@ class Base:
         try:
             if 'localised_name' in self.raw:
                 return self.data.localize_array(self.raw['localised_name'])
-            else:
+            elif f'{self.type}-name.{self.name}' in self.data.locale:
                 return self.data.localize(f'{self.type}-name.{self.name}')
+            else:
+                fallback = self.fallback()
+                if fallback:
+                    return fallback.localized_title
         except:  # noqa
-            return self.name
+            # TODO
+            pass
+        return self.name
 
     @property
     def description(self) -> str:
         try:
             if 'localised_description' in self.raw:
                 return self.data.localize_array(self.raw['localised_description'])
-            else:
+            elif f'{self.type}-description.{self.name}' in self.data.locale:
                 return self.data.localize(f'{self.type}-description.{self.name}')
+            else:
+                fallback = self.fallback()
+                if fallback:
+                    return fallback.description
         except:  # noqa
-            return ''
+            # TODO
+            pass
+        return ''
 
     @property
     def icon(self) -> Image:
-        return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
+        try:
+            return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
+        except KeyError:
+            fallback = self.fallback()
+            if fallback:
+                return fallback.icon
+            else:
+                raise
+
+    def fallback(self) -> Optional[Base]:
+        return None
 
 
 class Item(Base):
@@ -87,8 +109,7 @@ class ItemWithCount(NamedTuple):
 
     @property
     def item(self) -> Item:
-        data = self.data
-        return data.items[self.name]
+        return self.data.items[self.name]
 
     @property
     def localized_title(self) -> str:
@@ -134,55 +155,16 @@ class Recipe(Base):
         self.time = self.raw.get('energy_required', 0.5)
         self.crafting_category = self.raw.get('category', 'crafting')
 
-    @property
-    def _main_item(self) -> Optional[Item]:
+    def fallback(self) -> Optional[Item]:
         if 'result' in self.raw:
-            item_name = str(self.raw['result'])
-            return self.data.items[item_name]
+            main_item_name = str(self.raw['result'])
         elif 'main_product' in self.raw:
-            item_name = str(self.raw['main_product'])
-            return self.data.items[item_name]
+            main_item_name = str(self.raw['main_product'])
         elif len(self.products) == 1:
-            item_name = str(self.products[0].name)
-            return self.data.items[item_name]
+            main_item_name = str(self.products[0].name)
         else:
             return None
-
-    @property
-    def localized_title(self) -> str:
-        try:
-            if 'localised_name' in self.raw:
-                return self.data.localize_array(self.raw['localised_name'])
-            elif f'recipe-name.{self.name}' in self.data.locale:
-                return self.data.localize(f'recipe-name.{self.name}')
-            elif self._main_item:
-                return self._main_item.localized_title
-        except:  # noqa
-            pass
-        return self.name
-
-    @property
-    def description(self) -> str:
-        try:
-            if 'localised_description' in self.raw:
-                return self.data.localize_array(self.raw['localised_description'])
-            elif f'recipe-description.{self.name}' in self.data.locale:
-                return self.data.localize(f'recipe-description.{self.name}')
-            elif self._main_item:
-                return self._main_item.description
-        except:  # noqa
-            pass
-        return ''
-
-    @property
-    def icon(self) -> Image:
-        try:
-            return get_factorio_icon(self.data.reader, get_icon_specs(self.raw))
-        except KeyError:
-            if self._main_item:
-                return self._main_item.icon
-            else:
-                raise
+        return self.data.items.get(main_item_name)
 
     @property
     def crafted_in(self) -> list[tuple[Item, float]]:
@@ -193,10 +175,12 @@ class Recipe(Base):
     def order(self) -> str:
         if 'order' in self.raw:
             return cast(str, self.raw['order'])
-        elif self._main_item:
-            return self._main_item.order
         else:
-            return ''
+            fallback = self.fallback()
+            if fallback:
+                return fallback.order
+            else:
+                return ''
 
 
 class Tech(Base):
