@@ -250,6 +250,9 @@ class Base:
     def fallback(self) -> Optional[Base]:
         return None
 
+    def __str__(self) -> str:
+        return f'{self.type}.{self.name}'
+
 
 class Item(Base):
     order = JsonProp[str]()
