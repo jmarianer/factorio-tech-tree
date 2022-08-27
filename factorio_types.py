@@ -1,4 +1,5 @@
 from __future__ import annotations
+from decimal import Decimal
 from typing import NamedTuple, TYPE_CHECKING, Any, Iterator, Optional, TypeVar, cast, Generic
 from PIL.Image import Image
 
@@ -305,7 +306,20 @@ def _raw_to_item_list(data: FactorioData, raw_items: list[Any]) -> Iterator[Item
             if 'amount' in raw_item:
                 amount = raw_item['amount']
             else:
-                amount = f'{raw_item["amount_min"]}–{raw_item["amount_max"]}'
+                min = raw_item["amount_min"]
+                max = raw_item["amount_max"]
+                if min < max:
+                    amount = f'{min}–{max}'
+                else:
+                    amount = min
+            if 'probability' in raw_item:
+                prob = raw_item["probability"]
+                if prob != 1:
+                    prob = (Decimal(str(prob)) * 100).normalize().to_eng_string()
+                    if amount == 1:
+                        amount = f'{prob}%'
+                    else:
+                        amount = f'{prob}% {amount}'
         else:
             name, amount = raw_item
         yield ItemWithCount(data, name, amount)
