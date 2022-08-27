@@ -165,6 +165,7 @@ SUPERCLASS = {
         'repair-tool': 'tool',
 
         # Not true according to the Factorio docs but will do for our purposes (for now):
+        'equipment': 'entity',
         'fluid': 'item',
 }
 
@@ -272,6 +273,12 @@ class Item(Base):
                 for _, r in sorted(self.data.recipes.items())
                 if self.name in (p.name for p in r.products))
 
+    def fallback(self) -> Optional[Entity]:
+        for place_result_key in ('place_result', 'placed_as_equipment_result'):
+            if place_result_key in self.raw:
+                return self.data.entities.get(self.raw[place_result_key])
+        return None
+
 
 class ItemWithCount(NamedTuple):
     data: FactorioData
@@ -338,7 +345,7 @@ class Recipe(Base):
         return self.data.items.get(main_item_name)
 
     @property
-    def crafted_in(self) -> list[tuple[Item, float]]:
+    def crafted_in(self) -> list[tuple[Entity, float]]:
         return [(item, self.time / speed)
                 for item, speed in self.data.get_crafting_machines_for(self.crafting_category)]
 
@@ -352,6 +359,10 @@ class Recipe(Base):
                 return fallback.order
             else:
                 return ''
+
+
+class Entity(Base):
+    pass
 
 
 class Tech(Base):

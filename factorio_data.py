@@ -7,7 +7,7 @@ from typing import Any, Match, Iterator, Callable, TypeVar, Generator, TYPE_CHEC
 from defines import defines
 from mod_reader import ModReader
 from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
-from factorio_types import ItemWithCount, Recipe, Tech, Item, SUPERCLASS
+from factorio_types import ItemWithCount, Recipe, Tech, Item, Entity, SUPERCLASS
 
 
 R = TypeVar('R')
@@ -20,7 +20,7 @@ if not TYPE_CHECKING:
 class FactorioData:
     def __init__(self, base_dir: str, mod_cache_dir: str, mods: list[str],
                  username: str, token: str, quiet: bool = False):
-        self.character = Item(
+        self.character = Entity(
                 self, dict(name='character', type='character')
         )
 
@@ -37,6 +37,8 @@ class FactorioData:
 
         self.items = {item.name: item
                       for item in (self._get_all_of_type('item', Item))}
+        self.entities = {entity.name: entity
+                         for entity in (self._get_all_of_type('entity', Entity))}
         self.recipes = {name: Recipe(self, value)
                         for name, value in self.raw['recipe'].items()}
         self.technologies = {name: Tech(self, value)
@@ -258,7 +260,9 @@ class FactorioData:
                 return ''
             localized = self.locale[match[1]] + ' ' + match[2]
 
-        return str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
+        localized = str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
+        # localized = str(re.sub('__plural_for_parameter_(\d*)_{(.*)}', get_plural, localized))
+        return localized
 
     def localize_array(self, array: list[Any]) -> str:
         def localize_match(match: Match[str]) -> str:
@@ -273,8 +277,7 @@ class FactorioData:
         else:
             return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
 
-    # TODO this should use entities, not items!
-    def get_crafting_machines_for(self, crafting_category: str) -> Iterator[tuple[Item, float]]:
+    def get_crafting_machines_for(self, crafting_category: str) -> Iterator[tuple[Entity, float]]:
         crafting_machine_types = [
             "assembling-machine",
             "furnace",
@@ -287,13 +290,10 @@ class FactorioData:
         for crafter_type in crafting_machine_types:
             for machine_name, machine in sorted(self.raw[crafter_type].items()):
                 if crafting_category in machine['crafting_categories']:
-                    if 'placeable_by' in machine:
-                        name = machine['placeable_by']['item']
-                    else:
-                        name = machine_name
+                    name = machine_name
 
                     try:
-                        yield self.items[name], machine['crafting_speed']
+                        yield self.entities[name], machine['crafting_speed']
                     except KeyError:
                         # TODO
                         pass
