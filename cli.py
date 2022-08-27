@@ -38,8 +38,9 @@ def dump_data(mod_cache_dir: str, factorio_base: str, factorio_username: str, fa
 @click.option('--mods', multiple=True)
 @click.option('--output', default='output')
 @click.option('-q', '--quiet', is_flag=True)
+@click.option('--icons/--no-icons', default=True)
 def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, factorio_token: str,
-                mods: list[str], output: str, quiet: bool) -> None:
+                mods: list[str], output: str, quiet: bool, icons: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
     all_techs = {
@@ -80,21 +81,25 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
     item_template = env.get_template('item.html')
 
     for tech in all_techs.values():
-        tech.icon.save(f'{output}/tech_{tech.name}.png')
+        if icons:
+            tech.icon.save(f'{output}/tech_{tech.name}.png')
         write_template(
                 f'tech_{tech.name}.html', tech_template,
                 prerequisites=[all_techs[p] for p in tech.prerequisite_names if p in all_techs],
                 tech=tech)
 
     for group in groups:
-        group.icon.save(f'{output}/group_{group.name}.png')
+        if icons:
+            group.icon.save(f'{output}/group_{group.name}.png')
 
     for recipe in data.recipes.values():
-        recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
+        if icons:
+            recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
         write_template(f'recipe_{recipe.name}.html', recipe_template, recipe=recipe)
 
     for item in data.items.values():
-        item.icon.save(f'{output}/item_{item.name}.png')
+        if icons:
+            item.icon.save(f'{output}/item_{item.name}.png')
         write_template(f'item_{item.name}.html', item_template, item=item)
 
     write_template(
@@ -107,7 +112,8 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
     )
 
     copyfile('templates/factorio.css', f'{output}/factorio.css')
-    copyfile('templates/clock-icon.png', f'{output}/clock-icon.png')
+    if icons:
+        copyfile('templates/clock-icon.png', f'{output}/clock-icon.png')
 
 
 if __name__ == '__main__':
