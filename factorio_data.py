@@ -1,5 +1,5 @@
 import json
-import lupa
+import lupa.lua52
 import re
 from collections import defaultdict
 from typing import Any, Match, Iterator, Callable, TypeVar, Generator, TYPE_CHECKING
@@ -100,7 +100,7 @@ class FactorioData:
                 maybe_execute(f'__{mod}__/{filename}.lua')
         return lua_table_to_python(lua.globals().data.raw)
 
-    def _init_lua(self) -> lupa.LuaRuntime:
+    def _init_lua(self) -> lupa.lua52.LuaRuntime:
         def lua_package_searcher(require_argument: str) -> Any:
             # Lua allows "require foo.bar.baz", "require foo/bar/baz" and "require
             # foo/bar/baz.lua". Convert the former two to the latter, canonical form.
@@ -150,7 +150,7 @@ class FactorioData:
                     contents,
                     path)
 
-        lua = lupa.LuaRuntime(unpack_returned_tuples=True)  # noqa (PyCharm doesn't like that argument)
+        lua = lupa.lua52.LuaRuntime(unpack_returned_tuples=True)  # noqa (PyCharm doesn't like that argument)
         lua.execute('serpent = require("serpent")')
         lua.globals().package.path = \
             f'{self.base_dir}/base/?.lua;{self.base_dir}/core/lualib/?.lua'

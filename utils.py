@@ -1,7 +1,7 @@
 import base64
 import io
 import re
-from lupa import LuaRuntime
+from lupa.lua52 import LuaRuntime
 from typing import Any
 from PIL.Image import Image
 
@@ -9,7 +9,7 @@ from PIL.Image import Image
 # TODO: Figure out if this can be done more elegantly
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from lupa import LuaObject
+    from lupa.lua52 import LuaObject
 else:
     LuaObject = int
 

@@ -1,1 +1,1 @@
-from lupa._lupa import *
+from lupa.lua52 import *
