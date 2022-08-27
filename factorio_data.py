@@ -7,7 +7,7 @@ from typing import Any, Match, Iterator, Callable, TypeVar, Generator, TYPE_CHEC
 from defines import defines
 from mod_reader import ModReader
 from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
-from factorio_types import ItemWithCount, Recipe, Tech, Item, Entity, SUPERCLASS
+from factorio_types import ItemWithCount, Recipe, Tech, Item, Entity, SUPERCLASS, Group, Subgroup
 
 
 R = TypeVar('R')
@@ -44,6 +44,11 @@ class FactorioData:
         self.technologies = {name: Tech(self, value)
                              for name, value in self.raw['technology'].items()
                              if 'count' in self.raw['technology'][name]['unit']}
+
+        self.groups = {name: Group(self, value)
+                       for name, value in self.raw['item-group'].items()}
+        self.subgroups = {name: Subgroup(self, value)
+                          for name, value in self.raw['item-subgroup'].items()}
 
     def _read_raw_data(self) -> Any:
         def maybe_execute(path: str) -> Any:

@@ -279,6 +279,10 @@ class Item(Base):
                 return self.data.entities.get(self.raw[place_result_key])
         return None
 
+    @property
+    def subgroup(self) -> Subgroup:
+        return self.data.subgroups[self.raw['subgroup']]
+
 
 class ItemWithCount(NamedTuple):
     data: FactorioData
@@ -350,6 +354,17 @@ class Recipe(Base):
                 for item, speed in self.data.get_crafting_machines_for(self.crafting_category)]
 
     @property
+    def subgroup(self) -> Subgroup:
+        if 'subgroup' in self.raw:
+            return self.data.subgroups[self.raw['subgroup']]
+        else:
+            fallback = self.fallback()
+            if fallback:
+                return fallback.subgroup
+            else:
+                raise
+
+    @property
     def order(self) -> str:
         if 'order' in self.raw:
             return cast(str, self.raw['order'])
@@ -393,3 +408,15 @@ class Tech(Base):
         return self.data.items.get(
                 self.name,
                 Item(self.data, dict(name=self.name, type='item')))
+
+
+class Group(Base):
+    order = JsonProp[str]()
+
+
+class Subgroup(Base):
+    order = JsonProp[str]()
+
+    @property
+    def group(self) -> Group:
+        return self.data.groups[self.raw['group']]

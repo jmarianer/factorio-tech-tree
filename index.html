@@ -11,6 +11,21 @@
     </li>
     {% endfor %}
   </ul>
+  <h1>All recipes</h1>
+  {% for group, subgroups in grouped_recipes %}
+  <h2 class='group'>
+    <img src='group_{{ group.name }}.png'>
+    {{ group.localized_title }}
+  </h2>
+  {% for subgroup, recipes in subgroups %}
+  {% for recipe in recipes %}
+    <a class='inline-recipe' href='recipe_{{ recipe.name }}.html'>
+      <img src='recipe_{{ recipe.name }}.png' title="{{ recipe.localized_title }}">
+    </a>
+  {% endfor %}
+  <br />
+  {% endfor %}
+  {% endfor %}
   <h1>Technology list</h1>
   <div class='tech-list'>
     {% for tech in techs %}

@@ -1,3 +1,5 @@
+import itertools
+
 import click
 import json
 from jinja2 import Template
@@ -40,16 +42,19 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
                 mods: list[str], output: str, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
 
-    all_recipes = {name: data.recipes[name]
-                   for name in data.recipes}
-
     all_techs = {
             name: data.technologies[name]
             for name, raw_tech in data.raw['technology'].items()
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
-    all_items = data.items
+    visible_recipes = [v for v in data.recipes.values() if not v.hidden]
+    groups = sorted({recipe.subgroup.group for recipe in visible_recipes}, key=lambda g: g.order)
+    grouped_recipes = itertools.groupby(
+        itertools.groupby(
+            sorted(visible_recipes, key=lambda r: (r.subgroup.group.order, r.subgroup.order, r.order)),
+            key=lambda r: r.subgroup),
+        key=lambda sg: sg[0].group)
 
     techs_in_order: list[str] = []
     while True:
@@ -81,11 +86,14 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
                 prerequisites=[all_techs[p] for p in tech.prerequisite_names if p in all_techs],
                 tech=tech)
 
-    for recipe in all_recipes.values():
+    for group in groups:
+        group.icon.save(f'{output}/group_{group.name}.png')
+
+    for recipe in data.recipes.values():
         recipe.icon.save(f'{output}/recipe_{recipe.name}.png')
         write_template(f'recipe_{recipe.name}.html', recipe_template, recipe=recipe)
 
-    for item in all_items.values():
+    for item in data.items.values():
         item.icon.save(f'{output}/item_{item.name}.png')
         write_template(f'item_{item.name}.html', item_template, item=item)
 
@@ -94,7 +102,9 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
             # TODO make mod_info[m] a NamedTuple
             mod_list=sorted(data.mod_list, key=lambda m: str(data.mod_info[m]['title'])),
             mod_info=data.mod_info,
-            techs=(all_techs[t] for t in techs_in_order))
+            techs=(all_techs[t] for t in techs_in_order),
+            grouped_recipes=grouped_recipes,
+    )
 
     copyfile('factorio.css', f'{output}/factorio.css')
     copyfile('clock-icon.png', f'{output}/clock-icon.png')
