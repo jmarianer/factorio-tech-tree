@@ -22,7 +22,7 @@ def get_jinja_environment() -> Environment:
     def render_localized_text(text: str) -> Markup:
         return Markup(parser.format(text.replace('\\n', '\n')))
 
-    env = Environment(loader=FileSystemLoader('.'), autoescape=True)
+    env = Environment(loader=FileSystemLoader('templates'), autoescape=True)
     env.filters['bbcode'] = render_localized_text
 
     return env

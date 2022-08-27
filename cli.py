@@ -106,8 +106,8 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
             grouped_recipes=grouped_recipes,
     )
 
-    copyfile('factorio.css', f'{output}/factorio.css')
-    copyfile('clock-icon.png', f'{output}/clock-icon.png')
+    copyfile('templates/factorio.css', f'{output}/factorio.css')
+    copyfile('templates/clock-icon.png', f'{output}/clock-icon.png')
 
 
 if __name__ == '__main__':
