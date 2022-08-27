@@ -12,6 +12,160 @@ else:
 T = TypeVar('T')
 
 
+# SUPERCLASS massaged out of https://wiki.factorio.com/Prototype_definitions
+SUPERCLASS = {
+        # ENTITIES
+        'arrow': 'entity',
+        'artillery-flare': 'entity',
+        'artillery-projectile': 'entity',
+        'beam': 'entity',
+        'character-corpse': 'entity',
+        'cliff': 'entity',
+        'corpse': 'entity',
+        'rail-remnants': 'corpse',
+        'deconstructible-tile-proxy': 'entity',
+        'entity-ghost': 'entity',
+        'particle': 'entity',
+        'leaf-particle': 'particle',
+        'entity-with-health': 'entity',
+        'entity-with-owner': 'entity-with-health',
+        'accumulator': 'entity-with-owner',
+        'artillery-turret': 'entity-with-owner',
+        'beacon': 'entity-with-owner',
+        'boiler': 'entity-with-owner',
+        'burner-generator': 'entity-with-owner',
+        'character': 'entity-with-owner',
+        'combinator': 'entity-with-owner',
+        'arithmetic-combinator': 'combinator',
+        'decider-combinator': 'combinator',
+        'constant-combinator': 'entity-with-owner',
+        'container': 'entity-with-owner',
+        'logistic-container': 'container',
+        'infinity-container': 'logistic-container',
+        'crafting-machine': 'entity-with-owner',
+        'assembling-machine': 'crafting-machine',
+        'rocket-silo': 'assembling-machine',
+        'furnace': 'crafting-machine',
+        'electric-energy-interface': 'entity-with-owner',
+        'electric-pole': 'entity-with-owner',
+        'unit-spawner': 'entity-with-owner',
+        'flying-robot': 'entity-with-owner',
+        'combat-robot': 'flying-robot',
+        'robot-with-logistic-interface': 'flying-robot',
+        'construction-robot': 'robot-with-logistic-interface',
+        'logistic-robot': 'robot-with-logistic-interface',
+        'gate': 'entity-with-owner',
+        'generator': 'entity-with-owner',
+        'heat-interface': 'entity-with-owner',
+        'heat-pipe': 'entity-with-owner',
+        'inserter': 'entity-with-owner',
+        'lab': 'entity-with-owner',
+        'lamp': 'entity-with-owner',
+        'land-mine': 'entity-with-owner',
+        'linked-container': 'entity-with-owner',
+        'market': 'entity-with-owner',
+        'mining-drill': 'entity-with-owner',
+        'offshore-pump': 'entity-with-owner',
+        'pipe': 'entity-with-owner',
+        'infinity-pipe': 'pipe',
+        'pipe-to-ground': 'entity-with-owner',
+        'player-port': 'entity-with-owner',
+        'power-switch': 'entity-with-owner',
+        'programmable-speaker': 'entity-with-owner',
+        'pump': 'entity-with-owner',
+        'radar': 'entity-with-owner',
+        'rail': 'entity-with-owner',
+        'curved-rail': 'rail',
+        'straight-rail': 'rail',
+        'rail-signal-base': 'entity-with-owner',
+        'rail-chain-signal': 'rail-signal-base',
+        'rail-signal': 'rail-signal-base',
+        'reactor': 'entity-with-owner',
+        'roboport': 'entity-with-owner',
+        'simple-entity-with-owner': 'entity-with-owner',
+        'simple-entity-with-force': 'simple-entity-with-owner',
+        'solar-panel': 'entity-with-owner',
+        'storage-tank': 'entity-with-owner',
+        'train-stop': 'entity-with-owner',
+        'transport-belt-connectable': 'entity-with-owner',
+        'linked-belt': 'transport-belt-connectable',
+        'loader-1x1': 'transport-belt-connectable',
+        'loader': 'transport-belt-connectable',
+        'splitter': 'transport-belt-connectable',
+        'transport-belt': 'transport-belt-connectable',
+        'underground-belt': 'transport-belt-connectable',
+        'turret': 'entity-with-owner',
+        'ammo-turret': 'turret',
+        'electric-turret': 'turret',
+        'fluid-turret': 'turret',
+        'unit': 'entity-with-owner',
+        'vehicle': 'entity-with-owner',
+        'car': 'vehicle',
+        'rolling-stock': 'vehicle',
+        'artillery-wagon': 'rolling-stock',
+        'cargo-wagon': 'rolling-stock',
+        'fluid-wagon': 'rolling-stock',
+        'locomotive': 'rolling-stock',
+        'spider-vehicle': 'vehicle',
+        'wall': 'entity-with-owner',
+        'fish': 'entity-with-health',
+        'simple-entity': 'entity-with-health',
+        'spider-leg': 'entity-with-health',
+        'tree': 'entity-with-health',
+        'explosion': 'entity',
+        'flame-thrower-explosion': 'explosion',
+        'fire': 'entity',
+        'stream': 'entity',
+        'flying-text': 'entity',
+        'highlight-box': 'entity',
+        'item-entity': 'entity',
+        'item-request-proxy': 'entity',
+        'particle-source': 'entity',
+        'projectile': 'entity',
+        'resource': 'entity',
+        'rocket-silo-rocket': 'entity',
+        'rocket-silo-rocket-shadow': 'entity',
+        'smoke': 'smoke',
+        'smoke-with-trigger': 'smoke',
+        'speech-bubble': 'entity',
+        'sticker': 'entity',
+        'tile-ghost': 'entity',
+
+        # EQUIPMENT
+        'active-defense-equipment': 'equipment',
+        'battery-equipment': 'equipment',
+        'belt-immunity-equipment': 'equipment',
+        'energy-shield-equipment': 'equipment',
+        'generator-equipment': 'equipment',
+        'movement-bonus-equipment': 'equipment',
+        'night-vision-equipment': 'equipment',
+        'roboport-equipment': 'equipment',
+        'solar-panel-equipment': 'equipment',
+
+        # ITEMS
+        'ammo': 'item',
+        'capsule': 'item',
+        'gun': 'item',
+        'item-with-entity-data': 'item',
+        'item-with-label': 'item',
+        'item-with-inventory': 'item-with-label',
+        'blueprint-book': 'item-with-inventory',
+        'item-with-tags': 'item-with-label',
+        'selection-tool': 'item-with-label',
+        'blueprint': 'selection-tool',
+        'copy-paste-tool': 'selection-tool',
+        'deconstruction-item': 'selection-tool',
+        'upgrade-item': 'selection-tool',
+        'module': 'item',
+        'rail-planner': 'item',
+        'spidertron-remote': 'item',
+        'tool': 'item',
+        'armor': 'tool',
+        'mining-tool': 'tool',
+        'repair-tool': 'tool',
+}
+
+
 class JsonProp(Generic[T]):
     default: Optional[T]
 
@@ -41,34 +195,45 @@ class Base:
 
     @property
     def localized_title(self) -> str:
-        try:
-            if 'localised_name' in self.raw:
-                return self.data.localize_array(self.raw['localised_name'])
-            elif f'{self.type}-name.{self.name}' in self.data.locale:
-                return self.data.localize(f'{self.type}-name.{self.name}')
-            else:
-                fallback = self.fallback()
-                if fallback:
-                    return fallback.localized_title
-        except:  # noqa
-            # TODO
-            pass
+        # Try localization in data
+        if 'localised_name' in self.raw:
+            return self.data.localize_array(self.raw['localised_name'])
+
+        # Try localization in locale, based on type
+        cur_type: Optional[str] = self.type
+        while cur_type:
+            maybe_ret = self.data.localize(f'{cur_type}-name.{self.name}')
+            if maybe_ret:
+                return maybe_ret
+            cur_type = SUPERCLASS.get(cur_type)
+
+        # Try fallback object
+        fallback = self.fallback()
+        if fallback:
+            return fallback.localized_title
+
+        # As a last resort, return the unadorned name. TODO put a breakpoint here and see where this happens.
         return self.name
 
     @property
     def description(self) -> str:
-        try:
-            if 'localised_description' in self.raw:
-                return self.data.localize_array(self.raw['localised_description'])
-            elif f'{self.type}-description.{self.name}' in self.data.locale:
-                return self.data.localize(f'{self.type}-description.{self.name}')
-            else:
-                fallback = self.fallback()
-                if fallback:
-                    return fallback.description
-        except:  # noqa
-            # TODO
-            pass
+        # Try localization in data
+        if 'localised_description' in self.raw:
+            return self.data.localize_array(self.raw['localised_description'])
+
+        # Try localization in locale, based on type
+        cur_type: Optional[str] = self.type
+        while cur_type:
+            maybe_ret = self.data.localize(f'{cur_type}-description.{self.name}')
+            if maybe_ret:
+                return maybe_ret
+            cur_type = SUPERCLASS.get(cur_type)
+
+        # Try fallback object
+        fallback = self.fallback()
+        if fallback:
+            return fallback.description
+
         return ''
 
     @property

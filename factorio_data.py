@@ -270,8 +270,7 @@ class FactorioData:
             if match_object[1] == 'ENTITY':
                 return self.localize(f'entity-name.{match_object[2]}')
             elif match_object[1] == 'ITEM':
-                item_name = match_object[2]
-                return self.items[item_name].localized_title
+                return self.localize(f'item-name.{match_object[2]}')
             else:
                 return match_object[0]
 
@@ -279,8 +278,9 @@ class FactorioData:
             localized = self.locale[name]
         else:
             match = re.match(r'(.*)-(\d+)$', name)
-            if not match:
-                raise
+            if not match or match[1] not in self.locale:
+                # XXX This is a horrible kludge
+                return ''
             localized = self.locale[match[1]] + ' ' + match[2]
 
         return str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
@@ -291,6 +291,8 @@ class FactorioData:
 
         if isinstance(array, str):
             return array
+        elif isinstance(array, (int, float)):
+            return str(array)
         elif not array[0]:
             return ''.join(self.localize_array(x) for x in array)
         else:
