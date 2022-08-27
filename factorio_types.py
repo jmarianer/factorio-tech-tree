@@ -163,7 +163,7 @@ class Recipe(Base):
         elif len(self.products) == 1:
             main_item_name = str(self.products[0].name)
         else:
-            return None
+            main_item_name = self.name
         return self.data.items.get(main_item_name)
 
     @property
@@ -206,3 +206,8 @@ class Tech(Base):
         self.recipes = [factorio_data.recipes[effect['recipe']]
                         for effect in self.raw.get('effects', [])
                         if 'recipe' in effect]
+
+    def fallback(self) -> Item:
+        return self.data.items.get(
+                self.name,
+                Item(self.data, dict(name=self.name, type='item')))
