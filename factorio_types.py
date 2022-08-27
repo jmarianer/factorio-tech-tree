@@ -163,6 +163,9 @@ SUPERCLASS = {
         'armor': 'tool',
         'mining-tool': 'tool',
         'repair-tool': 'tool',
+
+        # Not true according to the Factorio docs but will do for our purposes (for now):
+        'fluid': 'item',
 }
 
 

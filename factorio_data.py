@@ -2,12 +2,19 @@ import json
 import lupa
 import re
 from collections import defaultdict
-from typing import Any, Match, Iterator
+from typing import Any, Match, Iterator, Callable, TypeVar, Generator, TYPE_CHECKING
 
 from defines import defines
 from mod_reader import ModReader
 from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
-from factorio_types import ItemWithCount, Recipe, Tech, Item
+from factorio_types import ItemWithCount, Recipe, Tech, Item, SUPERCLASS
+
+
+R = TypeVar('R')
+
+
+if not TYPE_CHECKING:
+    FactorioData = None
 
 
 class FactorioData:
@@ -28,44 +35,8 @@ class FactorioData:
         self.locale = self._init_locale()
         self.raw = self._read_raw_data()
 
-        self.item_types = [
-            'item',
-            'ammo',
-            'capsule',
-            'gun',
-            'item-with-entity-data',
-            'item-with-label',
-            'item-with-inventory',
-            'blueprint-book',
-            'item-with-tags',
-            'selection-tool',
-            'blueprint',
-            'copy-paste-tool',
-            'deconstruction-item',
-            'upgrade-item',
-            'module',
-            'rail-planner',
-            'spidertron-remote',
-            'tool',
-            'armor',
-            'mining-tool',
-            'repair-tool',
-
-            # XXX Not sure if "fluid" should count as "item".
-            'fluid',
-        ]
-
-        self.entity_types = [
-            'active-defense-equipment',
-            'assembling-machine',
-            'boiler',
-            'equipment',
-            'fluid',
-            'storage-tank',
-        ]
-        self.items = {name: self._get_item(name)
-                      for item_type in self.item_types
-                      for name in self.raw.get(item_type, [])}
+        self.items = {item.name: item
+                      for item in (self._get_all_of_type('item', Item))}
         self.recipes = {name: Recipe(self, value)
                         for name, value in self.raw['recipe'].items()}
         self.technologies = {name: Tech(self, value)
@@ -257,13 +228,17 @@ class FactorioData:
 
         return locale
 
-    def _get_item(self, item_name: str) -> Item:
-        # TODO is this even remotely correct?
-        raw_item = {}
-        for item_type in reversed(self.item_types):
-            if item_type in self.raw and item_name in self.raw[item_type]:
-                raw_item.update(self.raw[item_type][item_name])
-        return Item(self, raw_item)
+    def _get_all_of_type(
+            self,
+            base_class: str,
+            constructor: Callable[[FactorioData, Any], R]) \
+            -> Generator[R, None, None]:
+        for subclass, superclass in SUPERCLASS.items():
+            if superclass == base_class:
+                yield from self._get_all_of_type(subclass, constructor)
+
+        for raw_element in self.raw.get(base_class, {}).values():
+            yield constructor(self, raw_element)
 
     def localize(self, name: str) -> str:
         def get_localized_from_group(match_object: Match[str]) -> str:
