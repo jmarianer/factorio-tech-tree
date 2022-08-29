@@ -6,9 +6,9 @@ from mod_reader import ModReader
 
 
 class RGBA(NamedTuple):
-    r: int
-    g: int
-    b: int
+    r: float
+    g: float
+    b: float
     a: float = 1
 
 
@@ -52,16 +52,14 @@ def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
 
         if icon_layer.tint is not None:
             tint = icon_layer.tint
-            layer_grayscale = ImageOps.grayscale(layer).getdata()
-            layer_alpha = layer.getdata(3)
 
             layer_new_data = map(
-                    lambda grayscale, alpha: (
-                        int(grayscale * tint.r),
-                        int(grayscale * tint.g),
-                        int(grayscale * tint.b),
-                        int(alpha * tint.a)),
-                    layer_grayscale, layer_alpha)
+                    lambda data: (
+                        int(data[0] * tint.r),
+                        int(data[1] * tint.g),
+                        int(data[2] * tint.b),
+                        int(data[3] * tint.a)),
+                    layer.getdata())
 
             # TODO Not sure but I think the type of layer.putdata is just wrong in the stub.
             layer.putdata(list(layer_new_data))  # type: ignore
@@ -97,6 +95,8 @@ def get_layer(a_dict: Any) -> Layer:
             tint = RGBA(*a_tint)
         else:
             tint = RGBA(a_tint['r'], a_tint['g'], a_tint['b'], a_tint.get('a', 1))
+        if tint.r > 1 or tint.g > 1 or tint.b > 1:
+            tint = RGBA(tint.r / 255, tint.g / 255, tint.b / 255, tint.a)
 
     return Layer(icon_path=a_dict['icon'],
                  icon_size=a_dict.get('icon_size', None),
