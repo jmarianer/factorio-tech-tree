@@ -1,3 +1,4 @@
+from functools import cache
 import io
 import json
 import os
@@ -6,6 +7,7 @@ import shutil
 import urllib.parse
 import urllib.request
 from glob import glob
+from PIL import Image
 from typing import Optional
 from zipfile import ZipFile
 
@@ -72,3 +74,9 @@ class ModReader:
 
         return [f'__{game_mod}__/' + f.removeprefix(mod_dir)
                 for f in glob(f'{mod_dir}/{filename}')]
+
+    @cache
+    def get_image(self, path: str) -> Image.Image:
+        return Image \
+            .open(io.BytesIO(self.get_binary(path))) \
+            .convert('RGBA')

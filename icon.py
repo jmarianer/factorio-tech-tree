@@ -39,15 +39,13 @@ def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
     y1: Optional[float] = None
     y2: Optional[float] = None
     for icon_layer in icon_spec.layers:
-        layer = Image \
-            .open(io.BytesIO(reader.get_binary(icon_layer.icon_path)))
+        layer = reader.get_image(icon_layer.icon_path)
 
         layer_original_size = icon_layer.icon_size or icon_size
         layer_scaled_size = int(layer_original_size * icon_layer.scale)
 
         layer = layer \
             .crop((0, 0, layer.height, layer.height)) \
-            .convert('RGBA') \
             .resize((layer_scaled_size, layer_scaled_size))
 
         if icon_layer.tint is not None:
