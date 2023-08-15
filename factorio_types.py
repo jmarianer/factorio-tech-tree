@@ -261,6 +261,7 @@ class Base:
 
 class Item(Base):
     order = JsonProp[str]()
+    hidden = JsonProp[bool](False)
 
     @property
     def used_in(self) -> Iterator[Recipe]:
@@ -282,6 +283,8 @@ class Item(Base):
 
     @property
     def subgroup(self) -> Subgroup:
+        if self.type == 'fluid':
+            return self.data.subgroups['fluid']
         return self.data.subgroups[self.raw['subgroup']]
 
 

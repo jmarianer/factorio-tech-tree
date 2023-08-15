@@ -49,13 +49,11 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
-    visible_recipes = [v for v in data.recipes.values() if not v.hidden]
-    groups = sorted({recipe.subgroup.group for recipe in visible_recipes}, key=lambda g: g.order)
-    grouped_recipes = itertools.groupby(
-        itertools.groupby(
-            sorted(visible_recipes, key=lambda r: (r.subgroup.group.order, r.subgroup.order, r.order)),
-            key=lambda r: r.subgroup),
-        key=lambda sg: sg[0].group)
+    visible_items = list(sorted((v for v in data.items.values() if not v.hidden and v.name != 'item-unknown'),
+                                key=lambda r: (r.subgroup.group.order, r.subgroup.order, r.order)))
+    groups = list(item.subgroup.group for item in visible_items)
+    subgrouped_items = [(key, list(group)) for key, group in itertools.groupby(visible_items, key=lambda r: r.subgroup)]
+    grouped_items = [(key, list(group)) for key, group in itertools.groupby(subgrouped_items, key=lambda sg: sg[0].group)]
 
     techs_in_order: list[str] = []
     while True:
@@ -108,10 +106,12 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
             mod_list=sorted(data.mod_list, key=lambda m: str(data.mod_info[m]['title'])),
             mod_info=data.mod_info,
             techs=(all_techs[t] for t in techs_in_order),
-            grouped_recipes=grouped_recipes,
+            grouped_items=grouped_items,
     )
 
-    copyfile('templates/factorio.css', f'{output}/factorio.css')
+    for filename in ['factorio.css', 'background.jpeg', 'border1.png', 'border2.png']:
+        copyfile(f'templates/{filename}', f'{output}/{filename}')
+
     if icons:
         copyfile('templates/clock-icon.png', f'{output}/clock-icon.png')
 

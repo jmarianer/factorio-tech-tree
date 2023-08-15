@@ -1,35 +1,40 @@
 {% extends 'base.html' %}
-{% block body %}
-  <h1>Modlist</h1>
-  <ul>
-    {% for m in mod_list %}
-    <li>
-      {{ mod_info[m]['title'] }}
-      {% if 'version' in mod_info[m] %}
-        v{{ mod_info[m]['version'] }}
-      {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  <h1>All recipes</h1>
-  {% for group, subgroups in grouped_recipes %}
+{% block title %}All items{% endblock %}
+{% block header %}
+  {% for group, _ in grouped_items %}
+      <div class="group-container" onclick="
+      $('.dialog-content .group').hide();
+      $('#{{ group.name }}').show();
+      window.location.hash = '{{ group.name }}';
+">
   <h2 class='group'>
     <img src='group_{{ group.name }}.png'>
-    {{ group.localized_title }}
+    <span>{{ group.localized_title }}</span>
   </h2>
-  {% for subgroup, recipes in subgroups %}
-  {% for recipe in recipes %}
-    <a class='inline-recipe' href='recipe_{{ recipe.name }}.html'>
-      <img src='recipe_{{ recipe.name }}.png' title="{{ recipe.localized_title }}">
+      </div>
+{% endfor %}
+{% endblock %}
+{% block content %}
+<script>
+$(function(event){
+    if (window.location.hash === '') {
+        window.location.hash = '{{ grouped_items[0][0].name }}';
+        $('#{{ grouped_items[0][0].name }}').show();
+    } else {
+        $(window.location.hash).show();
+    }
+});
+</script>
+  {% for group, subgroups in grouped_items %}
+        <div class="group" id="{{ group.name }}" style="display: none">
+{% for subgroup, items in subgroups %}
+  {% for item in items %}
+    <a href='item_{{ item.name }}.html'>
+      <img class='icon' src='item_{{ item.name }}.png' title="{{ item.localized_title }}">
     </a>
   {% endfor %}
   <br />
   {% endfor %}
+        </div>
   {% endfor %}
-  <h1>Technology list</h1>
-  <div class='tech-list'>
-    {% for tech in techs %}
-    {{ render_tech(tech) }}
-    {% endfor %}
-  </div>
 {% endblock %}
