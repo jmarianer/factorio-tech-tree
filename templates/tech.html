@@ -1,4 +1,10 @@
 {% extends 'base.html' %}
+{% macro render_recipe(recipe) %}
+<a class='recipe' href="recipe_{{ recipe.name }}.html">
+    <img src='recipe_{{ recipe.name }}.png'>
+    {{ recipe.localized_title }}
+</a>
+{% endmacro %}
 {% block body %}
   <h1>Tech: {{ tech.localized_title }}</h1>
   <img src='tech_{{ tech.name }}.png'>

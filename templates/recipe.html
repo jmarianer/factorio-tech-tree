@@ -1,22 +1,33 @@
 {% extends 'base.html' %}
-{% block body %}
-  <h1>{{ recipe.localized_title }}</h1>
-  <img src='recipe_{{ recipe.name }}.png'>
-  <h2>Description</h2>
-  {{ recipe.description | bbcode }}
-  <h2>Inputs</h2>
-  {% for ingredient in recipe.ingredients %}
-  {{ render_item_with_count(ingredient) }}
-  {% endfor %}
-  <h2>Outputs:</h2>
-  {% for product in recipe.products %}
-  {{ render_item_with_count(product) }}
-  {% endfor %}
-  <h2>Crafted in:</h2>
-  {% for item, time in recipe.crafted_in %}
-  <a class='item' href="item_{{ item.name }}.html">
+{% macro render_item_with_count(item_with_count) %}
+<a class='item' href="item_{{ item_with_count.name }}.html">
+    {{ item_with_count.amount }} x
+    <img class="icon" src='item_{{ item_with_count.name }}.png'>
+    {{ item_with_count.localized_title }}
+</a>
+{% endmacro %}
+
+{% block title %}Recipe: {{ recipe.localized_title }}{% endblock %}
+{% block header %}
+<img src='recipe_{{ recipe.name }}.png'>
+<div class="description">
+    {{ recipe.description | bbcode }}
+</div>
+{% endblock %}
+{% block content %}
+<h2>Inputs</h2>
+{% for ingredient in recipe.ingredients %}
+{{ render_item_with_count(ingredient) }}
+{% endfor %}
+<h2>Outputs:</h2>
+{% for product in recipe.products %}
+{{ render_item_with_count(product) }}
+{% endfor %}
+<h2>Crafted in:</h2>
+{% for item, time in recipe.crafted_in %}
+<a class='item' href="item_{{ item.name }}.html">
     <img src='item_{{ item.name }}.png'>
     {{ item.localized_title }} ({{ time | round(2) }} seconds)
-  </a>
-  {% endfor %}
+</a>
+{% endfor %}
 {% endblock %}

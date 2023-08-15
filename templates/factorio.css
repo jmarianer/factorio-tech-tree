@@ -54,12 +54,12 @@ div.description {
 }
 
 div.recipe-container {
-    flex-grow: 1;
     justify-content: space-between;
     display: flex;
     border-width: 2px;
     border-style: inset;
     border-color: black;
+    width: 47%;
 }
 
 div.recipe {
@@ -108,6 +108,7 @@ div.recipe-list {
     gap: 2em;
     flex-wrap: wrap;
     margin-bottom: 32px;
+    justify-content: space-between;
 }
 
 .more-info:active {
@@ -155,4 +156,10 @@ h2.group span {
     text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
+}
+
+a.item {
+    display: block;
+    color: inherit;
+    text-decoration: none;
 }

@@ -16,7 +16,7 @@
 {% endblock %}
 {% block content %}
 <script>
-$(function(event){
+$(function(){
     if (window.location.hash === '') {
         window.location.hash = '{{ grouped_items[0][0].name }}';
         $('#{{ grouped_items[0][0].name }}').show();
