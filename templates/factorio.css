@@ -131,7 +131,7 @@ h2.group {
     border: 2px outset black;
     background-color: #414040;
     margin: 0;
-    padding-bottom: 5px;
+    padding: 5px;
 }
 
 h2.group:active {
@@ -152,14 +152,15 @@ div.group-container {
 
 h2.group span {
     white-space: nowrap;
-    width: 100%;
+    width: 128px;
     text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
 }
 
 a.item {
-    display: block;
+    display: flex;
+    align-items: center;
     color: inherit;
     text-decoration: none;
 }
