@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% macro render_item_with_count(item_with_count) %}
 <div style="position: relative;">
-    <span class="quantity">{{ item_with_count.amount }}x</span>
+    <span class="quantity">{{ item_with_count.quantity }}</span>
     <a class='item' href="item_{{ item_with_count.name }}.html">
         <img src='item_{{ item_with_count.name }}.png' class="icon" title="{{ item_with_count.localized_title }}">
     </a>

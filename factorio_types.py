@@ -193,6 +193,7 @@ class Base:
 
     name = JsonProp[str]()
     type = JsonProp[str]()
+    flags = JsonProp[list[str]]([])
 
     def __init__(self, data: FactorioData, raw: Any):
         self.data = data
@@ -291,7 +292,9 @@ class Item(Base):
 class ItemWithCount(NamedTuple):
     data: FactorioData
     name: str
-    amount: int
+    min: int
+    max: int
+    probability: Decimal
 
     @property
     def item(self) -> Item:
@@ -301,31 +304,51 @@ class ItemWithCount(NamedTuple):
     def localized_title(self) -> str:
         return self.item.localized_title
 
+    @property
+    def quantity(self) -> str:
+        """
+        Returns the quantity as a string of the form
+        [min[–max]x][probability%]
+        """
+        if self.min < self.max:
+            amount = f'{self.min}–{self.max}'
+        else:
+            amount = str(self.min)
+        amount += 'x'
+
+        if self.probability == 1:
+            prob = ''
+        else:
+            prob = (self.probability * 100).normalize().to_eng_string() + '%'
+
+        if self.min == 1 and self.max == 1 and prob:
+            return prob
+        else:
+            return f'{prob} {amount}'
+
 
 def _raw_to_item_list(data: FactorioData, raw_items: list[Any]) -> Iterator[ItemWithCount]:
+    min_amount: int
+    max_amount: int
+    probability: Decimal
+
     for raw_item in raw_items:
         if isinstance(raw_item, dict):
             name = raw_item['name']
             if 'amount' in raw_item:
-                amount = raw_item['amount']
+                min_amount = max_amount = raw_item['amount']
             else:
-                min = raw_item["amount_min"]
-                max = raw_item["amount_max"]
-                if min < max:
-                    amount = f'{min}–{max}'
-                else:
-                    amount = min
+                min_amount = raw_item["amount_min"]
+                max_amount = raw_item["amount_max"]
             if 'probability' in raw_item:
-                prob = raw_item["probability"]
-                if prob != 1:
-                    prob = (Decimal(str(prob)) * 100).normalize().to_eng_string()
-                    if amount == 1:
-                        amount = f'{prob}%'
-                    else:
-                        amount = f'{prob}% {amount}'
+                probability = Decimal(str(raw_item["probability"]))
+            else:
+                probability = Decimal(1)
         else:
-            name, amount = raw_item
-        yield ItemWithCount(data, name, amount)
+            name, min_amount = raw_item
+            max_amount = min_amount
+            probability = Decimal(1)
+        yield ItemWithCount(data, name, min_amount, max_amount, probability)
 
 
 class Recipe(Base):
@@ -411,7 +434,7 @@ class Tech(Base):
 
         count = self.raw['unit']['count']
         ingredients = [
-            ItemWithCount(self.data, i.name, i.amount * count)
+            ItemWithCount(self.data, i.name, i.min * count, i.max * count, i.probability)
             for i in _raw_to_item_list(self.data, self.raw['unit']['ingredients'])]
         self.time = int(self.raw['unit']['time']) * int(count)
         self.prerequisite_names = set(self.raw.get('prerequisites', []))

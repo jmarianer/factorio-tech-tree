@@ -49,7 +49,7 @@ def create_html(mod_cache_dir: str, factorio_base: str, factorio_username: str, 
             if raw_tech.get('enabled', True)
             and 'count' in raw_tech['unit']}  # 'count' eliminates infinite research
 
-    visible_items = list(sorted((v for v in data.items.values() if not v.hidden and v.name != 'item-unknown'),
+    visible_items = list(sorted((v for v in data.items.values() if not v.hidden and 'hidden' not in v.flags),
                                 key=lambda r: (r.subgroup.group.order, r.subgroup.order, r.order)))
     groups = list(item.subgroup.group for item in visible_items)
     subgrouped_items = [(key, list(group)) for key, group in itertools.groupby(visible_items, key=lambda r: r.subgroup)]

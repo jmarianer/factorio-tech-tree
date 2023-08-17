@@ -2,7 +2,7 @@
 {% macro render_item_with_count(item_with_count) %}
 <a class='item' href="item_{{ item_with_count.name }}.html">
     <tr>
-        <td style="text-align: right">{{ item_with_count.amount }} x</td>
+        <td style="text-align: right">{{ item_with_count.quantity }}</td>
         <td><img class="icon" src='item_{{ item_with_count.name }}.png'></td>
         <td>{{ item_with_count.localized_title }}</td>
     </tr>
