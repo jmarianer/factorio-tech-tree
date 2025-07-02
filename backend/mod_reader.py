@@ -8,12 +8,12 @@ import urllib.parse
 import urllib.request
 from glob import glob
 from PIL import Image
-from typing import Optional
+from pathlib import Path
 from zipfile import ZipFile
 
 
 class ModReader:
-    def __init__(self, base_dir: str, mod_cache_dir: str, username: str, token: str):
+    def __init__(self, base_dir: Path, mod_cache_dir: Path, username: str, token: str):
         self.mod_cache_dir = mod_cache_dir
         self.mod_to_path = {x: f'{base_dir}/{x}' for x in ['base', 'core']}
         self.username = username

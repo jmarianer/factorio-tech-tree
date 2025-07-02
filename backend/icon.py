@@ -1,6 +1,6 @@
 import io
 from typing import Any, Optional, NamedTuple
-from PIL import Image, ImageOps
+from PIL import Image
 
 from mod_reader import ModReader
 
@@ -28,10 +28,7 @@ class IconSpec(NamedTuple):
 def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
     icon_size = icon_spec.size
     if icon_size is None:
-        if len(icon_spec.layers) == 1:
-            return Image.open(io.BytesIO(reader.get_binary(icon_spec.layers[0].icon_path)))
-        else:
-            raise
+        return Image.open(io.BytesIO(reader.get_binary(icon_spec.layers[0].icon_path)))
 
     icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
     x1: Optional[float] = None
@@ -105,7 +102,11 @@ def get_layer(a_dict: Any) -> Layer:
 
 def get_icon_specs(a_dict: Any) -> IconSpec:
     if 'icon' in a_dict:
-        layers = [Layer(icon_path=a_dict['icon'])]
+        icon = a_dict['icon']
+        if isinstance(icon, str):
+            layers = [Layer(icon_path=icon)]
+        else:
+            layers = [Layer(icon_path=icon['filename'])]
     else:
         layers = [get_layer(i) for i in a_dict['icons']]
 

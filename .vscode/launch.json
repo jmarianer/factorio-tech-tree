@@ -2,10 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Create tree",
-            "type": "python",
+            "name": "Dump data",
+            "type": "debugpy",
             "request": "launch",
-            "program": "create_tech_tree.py",
+            "program": "backend/cli.py",
+            "args": [
+                "dump-data",
+                "-q",
+                "--output",
+                "assets/base",
+                "--factorio-base",
+                "/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data"
+            ],
             "console": "integratedTerminal"
         }
     ]

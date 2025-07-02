@@ -2,28 +2,16 @@ import json
 import lupa.lua52
 import re
 from collections import defaultdict
-from typing import Any, Match, Iterator, Callable, TypeVar, Generator, TYPE_CHECKING
+from pathlib import Path
+from typing import Any
 
-from defines import defines
 from mod_reader import ModReader
 from utils import parse_dependencies, python_to_lua_table, lua_table_to_python
-from factorio_types import ItemWithCount, Recipe, Tech, Item, Entity, SUPERCLASS, Group, Subgroup
-
-
-R = TypeVar('R')
-
-
-if not TYPE_CHECKING:
-    FactorioData = None
 
 
 class FactorioData:
-    def __init__(self, base_dir: str, mod_cache_dir: str, mods: list[str],
+    def __init__(self, base_dir: Path, mod_cache_dir: Path, mods: list[str],
                  username: str, token: str, quiet: bool = False):
-        self.character = Entity(
-                self, dict(name='character', type='character')
-        )
-
         self.base_dir = base_dir
         self.reader = ModReader(base_dir, mod_cache_dir, username, token)
         self.quiet = quiet
@@ -34,21 +22,6 @@ class FactorioData:
                 for name, info in self.mod_info.items()}
         self.locale = self._init_locale()
         self.raw = self._read_raw_data()
-
-        self.items = {item.name: item
-                      for item in (self._get_all_of_type('item', Item))}
-        self.entities = {entity.name: entity
-                         for entity in (self._get_all_of_type('entity', Entity))}
-        self.recipes = {name: Recipe(self, value)
-                        for name, value in self.raw['recipe'].items()}
-        self.technologies = {name: Tech(self, value)
-                             for name, value in self.raw['technology'].items()
-                             if 'count' in self.raw['technology'][name]['unit']}
-
-        self.groups = {name: Group(self, value)
-                       for name, value in self.raw['item-group'].items()}
-        self.subgroups = {name: Subgroup(self, value)
-                          for name, value in self.raw['item-subgroup'].items()}
 
     def _read_raw_data(self) -> Any:
         def maybe_execute(path: str) -> Any:
@@ -74,12 +47,12 @@ class FactorioData:
                 path)
 
         lua = self._init_lua()
-        lua.globals().mods = python_to_lua_table(lua, self.mod_versions)
+        lua.globals()['mods'] = python_to_lua_table(lua, self.mod_versions)
         maybe_execute('__core__/lualib/dataloader.lua')
         for filename in ['settings', 'settings-updates', 'settings-final-fixes']:
             for mod in self.mod_list:
                 maybe_execute(f'__{mod}__/{filename}.lua')
-        raw_settings = lua_table_to_python(lua.globals().data.raw)
+        raw_settings = lua_table_to_python(lua.globals()['data']['raw'])
 
         # Datatype: bool, int, etc.
         # Setting type: startup, runtime, etc.
@@ -91,14 +64,14 @@ class FactorioData:
                         'value': data['default_value']
                     }
 
-        # TODO incorporate settings from JSON of from live mod-settings:
+        # TODO incorporate settings from JSON or from live mod-settings:
         # read_tree_file('.../mod-settings.dat')
-        lua.globals().settings = settings
+        lua.globals()['settings'] = settings
 
         for filename in ['data', 'data-updates', 'data-final-fixes']:
             for mod in self.mod_list:
                 maybe_execute(f'__{mod}__/{filename}.lua')
-        return lua_table_to_python(lua.globals().data.raw)
+        return lua_table_to_python(lua.globals()['data']['raw'])
 
     def _init_lua(self) -> lupa.lua52.LuaRuntime:
         def lua_package_searcher(require_argument: str) -> Any:
@@ -117,9 +90,9 @@ class FactorioData:
             else:
                 # The global dir_stack table has the name of the current module's
                 # directory in position 1, always with a trailing slash.
-                if not lua.globals().dir_stack:
+                if not lua.globals()['dir_stack']:
                     return
-                current_module = lua.globals().dir_stack[1]
+                current_module = lua.globals()['dir_stack'][1]
                 match = re.match('(__.*__/).*', current_module)
                 if match:
                     game_mod_root = match[1]
@@ -150,13 +123,19 @@ class FactorioData:
                     contents,
                     path)
 
+        def lua_log(value: str) -> None:
+            if not self.quiet:
+                print(lua_table_to_python(value))
+
         lua = lupa.lua52.LuaRuntime(unpack_returned_tuples=True)  # noqa (PyCharm doesn't like that argument)
-        lua.execute('serpent = require("serpent")')
-        lua.globals().package.path = \
+        serpent = (Path(__file__).parent / 'serpent.lua').read_text(encoding='utf-8')
+        lua.execute('serpent = load(...)', serpent, 'serpent')
+        defines = (Path(__file__).parent / 'defines.lua').read_text(encoding='utf-8')
+        lua.execute(defines)
+        lua.globals()['package']['path'] = \
             f'{self.base_dir}/base/?.lua;{self.base_dir}/core/lualib/?.lua'
-        lua.globals().defines = python_to_lua_table(lua, defines)
         lua.execute('table.insert(package.searchers, 1, ...)', lua_package_searcher)
-        lua.globals().log = self.log
+        lua.globals()['log'] = lua_log
         lua.execute('''
             function math.pow(a, b)
                 return a ^ b
@@ -174,10 +153,6 @@ class FactorioData:
         ''')
 
         return lua
-
-    def log(self, value: str) -> None:
-        if not self.quiet:
-            print(lua_table_to_python(value))
 
     def _populate_mod_list(self, mods: set[str]) -> tuple[list[str], dict[str, Any]]:
         mods.update({'base', 'core'})
@@ -234,71 +209,3 @@ class FactorioData:
                     locale[prefix + name] = value
 
         return locale
-
-    def _get_all_of_type(
-            self,
-            base_class: str,
-            constructor: Callable[[FactorioData, Any], R]) \
-            -> Generator[R, None, None]:
-        for subclass, superclass in SUPERCLASS.items():
-            if superclass == base_class:
-                yield from self._get_all_of_type(subclass, constructor)
-
-        for raw_element in self.raw.get(base_class, {}).values():
-            yield constructor(self, raw_element)
-
-    def localize(self, name: str) -> str:
-        def get_localized_from_group(match_object: Match[str]) -> str:
-            if match_object[1] == 'ENTITY':
-                return self.localize(f'entity-name.{match_object[2]}')
-            elif match_object[1] == 'ITEM':
-                return self.localize(f'item-name.{match_object[2]}')
-            else:
-                return match_object[0]
-
-        if name in self.locale:
-            localized = self.locale[name]
-        else:
-            match = re.match(r'(.*)-(\d+)$', name)
-            if not match or match[1] not in self.locale:
-                # XXX This is a horrible kludge
-                return ''
-            localized = self.locale[match[1]] + ' ' + match[2]
-
-        localized = str(re.sub('__([^_]*)__([^_]*)__', get_localized_from_group, localized))
-        # localized = str(re.sub('__plural_for_parameter_(\d*)_{(.*)}', get_plural, localized))
-        return localized
-
-    def localize_array(self, array: list[Any]) -> str:
-        def localize_match(match: Match[str]) -> str:
-            return self.localize_array(array[int(match[1])])
-
-        if isinstance(array, str):
-            return array
-        elif isinstance(array, (int, float)):
-            return str(array)
-        elif not array[0]:
-            return ''.join(self.localize_array(x) for x in array)
-        else:
-            return re.sub(r'__(\d+)__', localize_match, self.localize(array[0]))
-
-    def get_crafting_machines_for(self, crafting_category: str) -> Iterator[tuple[Entity, float]]:
-        crafting_machine_types = [
-            "assembling-machine",
-            "furnace",
-            "rocket-silo"
-        ]
-
-        if crafting_category == 'crafting':
-            yield self.character, 1
-
-        for crafter_type in crafting_machine_types:
-            for machine_name, machine in sorted(self.raw[crafter_type].items()):
-                if crafting_category in machine['crafting_categories']:
-                    name = machine_name
-
-                    try:
-                        yield self.entities[name], machine['crafting_speed']
-                    except KeyError:
-                        # TODO
-                        pass

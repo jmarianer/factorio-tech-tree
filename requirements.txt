@@ -1,5 +1,5 @@
 jinja2
-git+https://github.com/jmarianer/lupa.git@bb584af#egg=lupa
+git+https://github.com/jmarianer/lupa.git#egg=lupa
 Pillow
 click
 mypy
