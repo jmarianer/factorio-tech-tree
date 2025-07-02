@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from factorio_data import FactorioData
 from icon import get_factorio_icon, get_icon_specs
+import concurrent.futures
 
 
 @click.group()
@@ -24,18 +25,22 @@ def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, 
     with open(output / 'data.json', 'w') as f:
         f.write(json.dumps(data.raw, sort_keys=True, indent=4))
 
-    object = data.raw['airborne-pollutant']['pollution']
-    icon_spec = get_icon_specs(object)
-    icon = get_factorio_icon(data.reader, icon_spec)
+    def generate_icon(data_reader, output_path, type_name, name, object_data):
+        if 'icon' in object_data or 'icons' in object_data:
+            print(f'Generating icon for {type_name} {name}')
+            icon_spec = get_icon_specs(object_data)
+            icon = get_factorio_icon(data_reader, icon_spec)
+            icon.save(output_path / 'icons' / type_name / f'{name}.png')
 
-    for type, objects in data.raw.items():
-        (output / 'icons' / type).mkdir(parents=True, exist_ok=True)
-        for name, object in objects.items():
-            if 'icon' in object or 'icons' in object:
-                print(f'Generating icon for {type} {name}')
-                icon_spec = get_icon_specs(object)
-                icon = get_factorio_icon(data.reader, icon_spec)
-                icon.save(output / 'icons' / type / f'{name}.png')
+    # Create all icon directories
+    for type_name, objects in data.raw.items():
+        (output / 'icons' / type_name).mkdir(parents=True, exist_ok=True)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        for type_name, objects in data.raw.items():
+            for name, object_data in objects.items():
+                if 'icon' in object_data or 'icons' in object_data:
+                    executor.submit(generate_icon, data.reader, output, type_name, name, object_data)
 
 
 if __name__ == '__main__':
