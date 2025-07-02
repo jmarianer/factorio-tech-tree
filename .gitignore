@@ -1,7 +1,7 @@
 __pycache__
 mod_cache
 output
-assets
+frontend/public/generated
 .idea
 env
 venv

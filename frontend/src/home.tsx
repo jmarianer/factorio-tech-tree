@@ -1,5 +1,5 @@
-import React from 'react';
-import data from '../assets/base/data.json'
+import React, { useContext } from 'react';
+import { DataContext } from './DataContext';
 
 function Dialog(title: string, header: React.ReactNode, content: React.ReactNode): React.ReactElement {
   return <div className="main-dialog">
@@ -16,11 +16,15 @@ function Dialog(title: string, header: React.ReactNode, content: React.ReactNode
 }
 
 export default function () {
+  const { data, loading } = useContext(DataContext);
+  if (loading) {
+    return <div>Loading...</div>;
+  }
   return Dialog('All items', <>
     {Object.entries(data['item-group']).map(([key, value]) => (
       <div className="group-container" key={key}>
         <h2 className="group">
-          <img src={`assets/base/icons/item-group/${key}.png`} />
+          <img src={`generated/base/icons/item-group/${key}.png`} />
           {key}
         </h2>
       </div>
