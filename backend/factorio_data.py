@@ -127,10 +127,10 @@ class FactorioData:
             if not self.quiet:
                 print(lua_table_to_python(value))
 
-        lua = lupa.lua52.LuaRuntime(unpack_returned_tuples=True)  # noqa (PyCharm doesn't like that argument)
+        lua = lupa.lua52.LuaRuntime(unpack_returned_tuples=True)
         serpent = (Path(__file__).parent / 'serpent.lua').read_text(encoding='utf-8')
-        lua.execute('serpent = load(...)', serpent, 'serpent')
-        defines = (Path(__file__).parent / 'defines.lua').read_text(encoding='utf-8')
+        lua.execute('serpent = load(...)()', serpent, 'serpent')
+        defines = (Path(__file__).parent / 'defines-1.1.110.lua').read_text(encoding='utf-8')
         lua.execute(defines)
         lua.globals()['package']['path'] = \
             f'{self.base_dir}/base/?.lua;{self.base_dir}/core/lualib/?.lua'

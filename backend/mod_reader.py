@@ -30,7 +30,11 @@ class ModReader:
             print(f'Downloading the latest version of {mod}...')
             mod_data_url = f'https://mods.factorio.com/api/mods/{urllib.parse.quote(mod, safe="")}'
             mod_data = json.loads(urllib.request.urlopen(mod_data_url).read())
-            download_url = mod_data['releases'][-1]['download_url']
+            compatible_releases = [release for release in mod_data['releases']
+                                   if release['info_json']['factorio_version'] == '1.1']
+            latest_release = compatible_releases[-1]
+            print(latest_release['version'])
+            download_url = latest_release['download_url']
 
             zip_url = f'https://mods.factorio.com{download_url}?username={self.username}&token={self.token}'
             zip_request = urllib.request.Request(

@@ -4,6 +4,20 @@ from pathlib import Path
 from factorio_data import FactorioData
 from icon import get_factorio_icon, get_icon_specs
 import concurrent.futures
+import math
+
+
+def sanitize_floats(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_floats(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_floats(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isinf(obj):
+            return "Infinity" if obj > 0 else "-Infinity"
+        elif math.isnan(obj):
+            return "NaN"
+    return obj
 
 
 @click.group()
@@ -23,11 +37,11 @@ def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, 
               mods: list[str], output: Path, quiet: bool) -> None:
     data = FactorioData(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
     with open(output / 'data.json', 'w') as f:
-        f.write(json.dumps(data.raw, sort_keys=True, indent=4))
+        f.write(json.dumps(sanitize_floats(data.raw), sort_keys=True, indent=4))
 
     def generate_icon(data_reader, output_path, type_name, name, object_data):
         if 'icon' in object_data or 'icons' in object_data:
-            print(f'Generating icon for {type_name} {name}')
+            # print(f'Generating icon for {type_name} {name}')
             icon_spec = get_icon_specs(object_data)
             icon = get_factorio_icon(data_reader, icon_spec)
             icon.save(output_path / 'icons' / type_name / f'{name}.png')
