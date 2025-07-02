@@ -15,21 +15,24 @@ function Dialog(title: string, header: React.ReactNode, content: React.ReactNode
   </div>;
 }
 
-export default function () {
-  const { data, loading } = useContext(DataContext);
+export default function Home() {
+  const { data, loading, error } = useContext(DataContext);
   if (loading) {
     return <div>Loading...</div>;
   }
+  if (!data) {
+    return <div>No data: {error?.message}</div>;
+  }
+
   return Dialog('All items', <>
-    {Object.entries(data['item-group']).map(([key, value]) => (
+    {Object.entries(data.groups).map(([key, value]) => (
       <div className="group-container" key={key}>
         <h2 className="group">
-          <img src={`generated/base/icons/item-group/${key}.png`} />
+          <img src={`generated/base/icons/item-group/${key}.png`} alt={key} />
           {key}
         </h2>
       </div>
     ))}
-    </>,
-   <>
-  </>);
+  </>,
+    <> </>);
 }
