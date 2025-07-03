@@ -2,8 +2,8 @@
 # exported in the calling shell.
 mkdir -p frontend/public/generated/{base,spacex,ind,angelbobs,k2spacex}
 
-python backend/cli.py dump-data -q --output frontend/public/generated/base
-python backend/cli.py dump-data -q --output frontend/public/generated/spacex --mods space-exploration --mods space-exploration-postprocess
-python backend/cli.py dump-data -q --output frontend/public/generated/k2spacex --mods space-exploration --mods space-exploration-postprocess --mods Krastorio2
-python backend/cli.py dump-data -q --output frontend/public/generated/ind --mods IndustrialRevolution
-python backend/cli.py dump-data -q --output frontend/public/generated/angelbobs --mods SpaceMod --mods angelsaddons-storage --mods angelsbioprocessing --mods angelspetrochem --mods angelsrefining --mods angelssmelting --mods bobassembly --mods bobelectronics --mods bobenemies --mods bobequipment --mods bobinserters --mods boblibrary --mods boblogistics --mods bobmining --mods bobmodules --mods bobores --mods bobplates --mods bobpower --mods bobrevamp --mods bobtech --mods bobwarfare
+time python backend/cli.py dump-data -q --output frontend/public/generated/base
+time python backend/cli.py dump-data -q --output frontend/public/generated/spacex --mods space-exploration --mods space-exploration-postprocess
+# python backend/cli.py dump-data -q --output frontend/public/generated/k2spacex --mods space-exploration --mods space-exploration-postprocess --mods Krastorio2
+time python backend/cli.py dump-data -q --output frontend/public/generated/ind --mods IndustrialRevolution
+time python backend/cli.py dump-data -q --output frontend/public/generated/angelbobs --mods SpaceMod --mods angelsaddons-storage --mods angelsbioprocessing --mods angelspetrochem --mods angelsrefining --mods angelssmelting --mods bobassembly --mods bobelectronics --mods bobenemies --mods bobequipment --mods bobinserters --mods boblibrary --mods boblogistics --mods bobmining --mods bobmodules --mods bobores --mods bobplates --mods bobpower --mods bobrevamp --mods bobtech --mods bobwarfare

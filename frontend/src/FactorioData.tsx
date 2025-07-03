@@ -1,9 +1,11 @@
 import { all_items } from './superclass';
+import { SUPERCLASS } from './superclass';
 
 export class FactorioData {
   readonly items: Record<string, Item>;
   readonly subgroups: Record<string, Subgroup>;
   readonly groups: Record<string, Group>;
+  readonly locale: Record<string, any>;
 
   constructor(data: any) {
     const createRecord = <T extends Base>(items: Record<string, object>, ClassType: new (data: FactorioData, item: any) => T): Record<string, T> => {
@@ -14,11 +16,50 @@ export class FactorioData {
 
     this.items = createRecord(
       all_items
-        .reduce((acc, itemType) => ({ ...acc, ...data[itemType] }), {}),
+        .reduce((acc, itemType) => ({ ...acc, ...data['raw'][itemType] }), {}),
       Item
     );
-    this.subgroups = createRecord(data['item-subgroup'], Subgroup);
-    this.groups = createRecord(data['item-group'], Group);
+    this.subgroups = createRecord(data['raw']['item-subgroup'], Subgroup);
+    this.groups = createRecord(data['raw']['item-group'], Group);
+    this.locale = data['locale'];
+  }
+
+  localize(language: string, name: string): string {
+    const locale = this.locale[language];
+    let localized: string = '';
+    if (name in locale) {
+      localized = locale[name];
+    } else {
+      const match = name.match(/(.*)-(\d+)$/);
+      if (!match || !(locale && match[1] in locale)) {
+        // XXX This is a horrible kludge
+        return '';
+      }
+      localized = locale[match[1]] + ' ' + match[2];
+    }
+
+    // Replace __ENTITY__foo__ or __ITEM__bar__ with localized names
+    localized = localized.replace(/__ENTITY__([^_]*)__/, (_, name) => this.localize(language, `entity-name.${name}`));
+    localized = localized.replace(/__ITEM__([^_]*)__/, (_, name) => this.localize(language, `item-name.${name}`));
+
+    return localized;
+  }
+
+  localizeArray(language: string, array: string | number | string[]): string {
+    // Helper for replacing __n__ with localized value
+
+    if (typeof array === 'string') {
+      return array;
+    } else if (typeof array === 'number') {
+      return String(array);
+    } else if (!array[0]) {
+      return array.map((x: any) => this.localizeArray(language, x)).join('');
+    } else {
+      // Replace __n__ with localized value from array[n]
+      return this.localize(language, array[0]).replace(/__(\d+)__/g, ((_, n) => {
+          return this.localizeArray(language, array[parseInt(n, 10)]);
+        }));
+    }
   }
 }
 
@@ -34,6 +75,37 @@ abstract class Base {
   }
   get fallback(): Base | null {
     return null;
+  }
+
+  localize(language: string, raw_field: string, locale_field: string): string | undefined {
+    // Try localization in data
+    if (this.json[raw_field]) {
+      return this.data.localizeArray(language, this.json[raw_field]);
+    }
+
+    // Try localization in locale, based on type
+    let cur_type: string | undefined = this.type;
+    while (cur_type) {
+      const maybe_ret = this.data.localize(language, `${cur_type}-${locale_field}.${this.name}`);
+      if (maybe_ret) {
+        return maybe_ret;
+      }
+      cur_type = SUPERCLASS[cur_type];
+    }
+
+    // Try fallback object
+    const fallback = this.fallback;
+    if (fallback) {
+      return fallback.localize(language, raw_field, locale_field);
+    }
+  }
+
+  localized_title(language: string): string {
+    return this.localize(language, 'localised_name', 'name') || this.name;
+  }
+
+  description(language: string): string {
+    return this.localize(language, 'localised_description', 'description') || '';
   }
 }
 

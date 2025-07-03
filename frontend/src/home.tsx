@@ -38,7 +38,7 @@ export default function Home() {
         <div className="group-container" key={group.name}>
           <h2 className="group" onClick={() => setSelectedGroup(group.name)}>
             <img src={`/generated/${regime}/icons/item-group/${group.name}.png`} alt={group.name} />
-            {group.name}
+            {group.localized_title('en')}
           </h2>
         </div>
       ))}
