@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { DataProvider } from './DataContext';
 import Home from './home';
 import './factorio.css';
@@ -15,7 +15,7 @@ root.render(
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/foo" element={<div>Foo</div>} />
+          <Route path="/foo" element={<Link to="/">Foo</Link>} />
         </Routes>
       </Router>
     </DataProvider>

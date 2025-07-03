@@ -1,6 +1,7 @@
-import React, { useContext, useState } from 'react';
-import { DataContext } from './DataContext';
+import React, { useState } from 'react';
+import { useData } from './DataContext';
 import _ from 'lodash';
+import { Link } from 'react-router-dom';
 
 function Dialog(title: string, header: React.ReactNode, content: React.ReactNode): React.ReactElement {
   return <div className="main-dialog">
@@ -17,15 +18,15 @@ function Dialog(title: string, header: React.ReactNode, content: React.ReactNode
 }
 
 export default function Home() {
-  const { data, loading, error } = useContext(DataContext);
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  if (!data) {
-    return <div>No data: {error?.message}</div>;
-  }
+  const data = useData();
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(() => {
+    return window.location.hash.slice(1) || null;
+  });
+  React.useEffect(() => {
+    if (selectedGroup) {
+      window.location.hash = selectedGroup;
+    }
+  }, [selectedGroup]);
 
   const grouped_items = _(data.items)
     .filter(item => !item.hidden && !item.flags.includes('hidden'))
@@ -59,7 +60,7 @@ export default function Home() {
           {_(subgroup)
             .orderBy((item) => item.order)
             .value()
-            .map((item) => <img className='icon' src={`generated/base/icons/${item.type}/${item.name}.png`} alt={item.name} />)}
+            .map((item) => <Link to={`${item.type}/${item.name}`}><img className='icon' src={`generated/base/icons/${item.type}/${item.name}.png`} alt={item.name} /></Link>)}
           <br />
       </>)}
     </>);
