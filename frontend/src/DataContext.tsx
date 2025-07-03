@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { all_items } from './superclass';
 
 class FactorioData {
   readonly items: Record<string, Item>;
@@ -12,7 +13,11 @@ class FactorioData {
       );
     };
 
-    this.items = createRecord(data.item, Item);
+    this.items = createRecord(
+      all_items
+        .reduce((acc, itemType) => ({ ...acc, ...data[itemType] }), {}),
+      Item
+    );
     this.subgroups = createRecord(data['item-subgroup'], Subgroup);
     this.groups = createRecord(data['item-group'], Group);
   }
@@ -33,7 +38,7 @@ abstract class Base {
   }
 }
 
-class Item extends Base {
+export class Item extends Base {
   order: string;
   hidden: boolean;
 
@@ -48,11 +53,14 @@ class Item extends Base {
   }
 
   get subgroup(): Subgroup {
+    if (this.type === 'fluid') {
+      return this.data.subgroups['fluid']
+    }
     return this.data.subgroups[this.json.subgroup];
   }
 }
 
-class Group extends Base {
+export class Group extends Base {
   order: string;
 
   constructor(data: FactorioData, json: any) {
@@ -61,7 +69,7 @@ class Group extends Base {
   }
 }
 
-class Subgroup extends Base {
+export class Subgroup extends Base {
   order: string;
 
   constructor(data: FactorioData, json: any) {
@@ -75,7 +83,7 @@ class Subgroup extends Base {
 }
 
 export const DataContext = createContext<{
-  data: any;
+  data: FactorioData | null;
   loading: boolean;
   error: Error | null;
 }>({
@@ -93,7 +101,6 @@ export const DataProvider = ({ children }: { children: React.ReactNode; }) => {
     async function loadData() {
       try {
         const data = await fetch('/generated/base/data.json').then(res => res.json());
-        console.log(data);
         setData(new FactorioData(data));
       } catch (err: any) {
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));
