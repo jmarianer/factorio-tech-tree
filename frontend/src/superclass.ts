@@ -155,29 +155,11 @@ export const SUPERCLASS: Record<string, string> = {
   'fluid': 'item',
 }
 
-// TODO: Generate this from SUPERCLASS, and make sure it's in the correct order
-export const all_items = 
-[
-  'item',
-  'ammo',
-  'capsule',
-  'gun',
-  'item-with-entity-data',
-  'item-with-label',
-  'item-with-inventory',
-  'blueprint-book',
-  'item-with-tags',
-  'selection-tool',
-  'blueprint',
-  'copy-paste-tool',
-  'deconstruction-item',
-  'upgrade-item',
-  'module',
-  'rail-planner',
-  'spidertron-remote',
-  'tool',
-  'armor',
-  'mining-tool',
-  'repair-tool',
-  'fluid',
-];
+function get_all_subclasses(superclass: string): string[] {
+  const direct_subclasses = Object.keys(SUPERCLASS).filter(key => SUPERCLASS[key] === superclass);
+  const proper_subclasses = direct_subclasses.flatMap(subclass => get_all_subclasses(subclass));
+  return [superclass, ...proper_subclasses];
+}
+
+export const all_items = get_all_subclasses('item');
+export const all_entities = get_all_subclasses('entity');

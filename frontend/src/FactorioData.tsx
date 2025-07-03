@@ -1,10 +1,11 @@
-import { all_items } from './superclass';
+import { all_entities, all_items } from './superclass';
 import { SUPERCLASS } from './superclass';
 
 export class FactorioData {
   readonly items: Record<string, Item>;
   readonly subgroups: Record<string, Subgroup>;
   readonly groups: Record<string, Group>;
+  readonly entities: Record<string, Entity>;
   readonly locale: Record<string, any>;
 
   constructor(data: any) {
@@ -18,6 +19,11 @@ export class FactorioData {
       all_items
         .reduce((acc, itemType) => ({ ...acc, ...data['raw'][itemType] }), {}),
       Item
+    );
+    this.entities = createRecord(
+      all_entities
+        .reduce((acc, entityType) => ({ ...acc, ...data['raw'][entityType] }), {}),
+      Entity
     );
     this.subgroups = createRecord(data['raw']['item-subgroup'], Subgroup);
     this.groups = createRecord(data['raw']['item-group'], Group);
@@ -63,7 +69,7 @@ export class FactorioData {
   }
 }
 
-abstract class Base {
+class Base {
   readonly name: string;
   readonly type: string;
   readonly flags: string[];
@@ -119,7 +125,12 @@ export class Item extends Base {
     this.hidden = json.hidden || false;
   }
 
-  get fallback() {
+  get fallback(): Base | null {
+    for (const place_result_key of ['place_result', 'placed_as_equipment_result']) {
+      if (place_result_key in this.json) {
+        return this.data.entities[this.json[place_result_key]];
+      }
+    }
     return null;
   }
 
@@ -129,6 +140,9 @@ export class Item extends Base {
     }
     return this.data.subgroups[this.json.subgroup];
   }
+}
+
+export class Entity extends Base {
 }
 
 export class Group extends Base {

@@ -8,10 +8,13 @@ export default function Item() {
   const item = data.items[name!];
 
   return Dialog(`Item: ${item.localized_title('en')}`,
-    <img src={`/generated/${regime}/icons/${type}/${name}.png`} alt={name} />,
+    <>
+      <img src={`/generated/${regime}/icons/${type}/${name}.png`} alt={name} />
+      <div className="description">
+        {item.description('en')}
+      </div>
+    </>,
     <div>
-      <h1>{item.localized_title('en')}</h1>
-      <p>{item.description('en')}</p>
     </div>
   );
 }
