@@ -1,9 +1,11 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { FactorioData } from './FactorioData';
+import { useParams } from 'react-router-dom';
 
 const DataContext = createContext<FactorioData | null>(null);
 
 export const DataProvider = ({ children }: { children: React.ReactNode; }) => {
+  const { regime } = useParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -11,7 +13,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode; }) => {
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await fetch('/generated/base/data.json').then(res => res.json());
+        const data = await fetch(`/generated/${regime}/data.json`).then(res => res.json());
         setData(new FactorioData(data));
       } catch (err: any) {
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));

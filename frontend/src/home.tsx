@@ -1,23 +1,11 @@
 import React, { useState } from 'react';
 import { useData } from './DataContext';
 import _ from 'lodash';
-import { Link } from 'react-router-dom';
-
-function Dialog(title: string, header: React.ReactNode, content: React.ReactNode): React.ReactElement {
-  return <div className="main-dialog">
-    <h1>{title}</h1>
-    <div className="dialog-wrapper">
-        <div className="dialog-header">
-            {header}
-        </div>
-        <div className="dialog-content">
-            {content}
-        </div>
-    </div>
-  </div>;
-}
+import { Link, useParams } from 'react-router-dom';
+import { Dialog } from './Dialog';
 
 export default function Home() {
+  const { regime } = useParams();
   const data = useData();
   const [selectedGroup, setSelectedGroup] = useState<string | null>(() => {
     return window.location.hash.slice(1) || null;
@@ -49,19 +37,19 @@ export default function Home() {
       {groups.map((group) => (
         <div className="group-container" key={group.name}>
           <h2 className="group" onClick={() => setSelectedGroup(group.name)}>
-            <img src={`generated/base/icons/item-group/${group.name}.png`} alt={group.name} />
+            <img src={`/generated/${regime}/icons/item-group/${group.name}.png`} alt={group.name} />
             {group.name}
           </h2>
         </div>
       ))}
     </>,
     <>
-      {selectedGroup && grouped_items.get(selectedGroup).map((subgroup) => <>
+      {selectedGroup && grouped_items.get(selectedGroup).map((subgroup) => <div key={subgroup[0].name}>
           {_(subgroup)
             .orderBy((item) => item.order)
             .value()
-            .map((item) => <Link to={`${item.type}/${item.name}`}><img className='icon' src={`generated/base/icons/${item.type}/${item.name}.png`} alt={item.name} /></Link>)}
+            .map((item) => <Link to={`${item.type}/${item.name}`} key={item.name}><img className='icon' src={`/generated/${regime}/icons/${item.type}/${item.name}.png`} alt={item.name} /></Link>)}
           <br />
-      </>)}
+      </div>)}
     </>);
 }
