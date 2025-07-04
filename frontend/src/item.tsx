@@ -1,32 +1,9 @@
 import { Link, useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
 import { useData } from './DataContext';
-import BBCodeComponent from '@bbob/react';
-import { createPreset } from '@bbob/preset';
 import { ItemWithCount, Recipe } from './FactorioData';
 import { ItemIcon } from './Elements';
-
-const factorioPreset = createPreset({
-  font: (node) => (
-     {
-      tag: 'b',
-      content: node.content,
-    }),
-  color: (node) => ({
-      tag: 'span',
-      attrs: {
-        style: {
-          color: Object.keys(node.attrs || {})[0],
-        },
-      },
-      content: node.content,
-    }),
-  br: () => ({ tag: 'br' }),
-})
-
-function BBCode(props: { code: string }) {
-  return <BBCodeComponent plugins={[factorioPreset()]}>{props.code.replaceAll('\\n', '[br]')}</BBCodeComponent>;
-}
+import { BBCode } from './BBCode';
 
 function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }) {
   return (
@@ -69,7 +46,7 @@ export default function Item() {
         <BBCode code={item.description('en')} />
       </div>
     </>,
-    <div>
+    <>
       <h2>Produced in</h2>
       <div className="recipe-list">
         {item.produced_in.map(recipe => (
@@ -82,6 +59,6 @@ export default function Item() {
           <RenderRecipe key={recipe.name} recipe={recipe} />
         ))}
       </div>
-    </div>
+    </>
   );
 }
