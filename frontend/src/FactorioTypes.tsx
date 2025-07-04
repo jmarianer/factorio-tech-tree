@@ -69,13 +69,17 @@ export class Item extends Base {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  get fallback(): Base | null {
+  get placement_result(): Base | null {
     for (const place_result_key of ['place_result', 'placed_as_equipment_result']) {
       if (place_result_key in this.json) {
         return this.data.entities[this.json[place_result_key]];
       }
     }
     return null;
+  }
+
+  get fallback(): Base | null {
+    return this.placement_result;
   }
 
   get subgroup(): Subgroup {
@@ -87,6 +91,51 @@ export class Item extends Base {
 }
 
 export class Entity extends Base {
+}
+
+export class Turret extends Entity {
+  constructor(data: FactorioData, json: any) {
+    super(data, json);
+  }
+
+  get ammo_categories(): [string, Item[]][] {
+    // TODO understand, and also fix localization
+    const attack_params = this.json['attack_parameters'];
+    if (attack_params['type'] === 'stream') {
+      const ammo = attack_params['fluids'].map((ammo: any) => this.data.items[ammo['type']]);
+      return [[this.data.localize('en', 'ammo-category-name.fluid'), ammo]];
+    } else {
+      let categories: string[];
+      if ('ammo_type' in attack_params) {
+        categories = [attack_params['ammo_type']['category']];
+      } else if ('ammo_categories' in attack_params) {
+        categories = attack_params['ammo_categories'];
+      } else if ('ammo_category' in attack_params) {
+        categories = [attack_params['ammo_category']];
+      } else {
+        return [];
+      }
+
+      return categories.map(category => {
+        let category_name = this.data.localize('en', `ammo-category-name.${category}`);
+        if (!category_name) {
+          category_name = category;
+        }
+        const ammo: Item[] = [];
+        for (const item of Object.values(this.data.items)) {
+          if (item.type === 'ammo') {
+            const ammo_type = item.json['ammo_type'];
+            if (!Array.isArray(ammo_type)) {
+              if (ammo_type['category'] === category) {
+                ammo.push(item);
+              }
+            }
+          }
+        }
+        return [category_name, ammo];
+      });
+    }
+  }
 }
 
 export class CraftingMachine extends Entity {

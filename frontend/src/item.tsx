@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
 import { useData } from './DataContext';
 import { ItemWithCount } from './FactorioTypes';
@@ -39,6 +39,12 @@ export default function Item() {
           <RenderRecipe key={recipe.name} recipe={recipe} />
         ))}
       </div>
+      {item.placement_result && (
+        <>
+          <h2>Entity: {item.placement_result.localized_title('en')}</h2>
+          <Link to={`/${regime}/entity/${item.placement_result.name}`}>More info</Link>
+        </>
+      )}
     </>
   );
 }

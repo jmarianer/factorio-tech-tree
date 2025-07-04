@@ -2,8 +2,8 @@ import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
 import { BBCode } from "./BBCode";
 import { Dialog } from "./Dialog";
-import { CraftingMachine as CraftingMachineType } from "./FactorioTypes";
-import { RenderRecipe } from "./Elements";
+import { CraftingMachine as CraftingMachineType, Turret as TurretType } from "./FactorioTypes";
+import { ItemIcon, RenderRecipe } from "./Elements";
 
 function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
   const data = useData();
@@ -22,6 +22,30 @@ function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
   </>;
 } 
 
+function Turret({ entity }: { entity: TurretType }) {
+  // TODO deuglify
+  const attackParams = entity.json['attack_parameters'];
+  return <>
+    {attackParams.type} turret. <br />
+    Range:
+    {attackParams.min_range && `${attackParams.min_range} – `}
+    {attackParams.range} <br />
+    {entity.ammo_categories && (
+      <>
+        Ammo categories: <br />
+        {entity.ammo_categories.map(([category, ammo]) => (
+          <div key={category}>
+            {category}
+            {Array.isArray(ammo) && ammo.map((item) => (
+              <ItemIcon key={item.name} item={item} />
+            ))}
+          </div>
+        ))}
+      </>
+    )}
+  </>;
+}
+
 export default function Entity() {
   const { regime, name } = useParams();
   const data = useData();
@@ -33,6 +57,6 @@ export default function Entity() {
         <BBCode code={entity.description('en')} />
       </div>
     </>,
-    entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> : <> </>
+    entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> : entity instanceof TurretType ? <Turret entity={entity} /> : null
   );
 }

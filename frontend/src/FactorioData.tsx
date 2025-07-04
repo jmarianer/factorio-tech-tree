@@ -1,4 +1,4 @@
-import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine } from './FactorioTypes';
+import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret } from './FactorioTypes';
 import { all_items } from './superclass';
 import _ from 'lodash';
 
@@ -82,10 +82,10 @@ const all_entities = {
   'splitter': Entity,
   'transport-belt': Entity,
   'underground-belt': Entity,
-  'turret': Entity,
-  'ammo-turret': Entity,
-  'electric-turret': Entity,
-  'fluid-turret': Entity,
+  'turret': Turret,
+  'ammo-turret': Turret,
+  'electric-turret': Turret,
+  'fluid-turret': Turret,
   'unit': Entity,
   'vehicle': Entity,
   'car': Entity,
