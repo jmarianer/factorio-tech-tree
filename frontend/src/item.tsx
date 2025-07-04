@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
 import { useData } from './DataContext';
-import { ItemWithCount, Recipe } from './FactorioData';
+import { ItemWithCount, Recipe } from './FactorioTypes';
 import { ItemIcon } from './Elements';
 import { BBCode } from './BBCode';
 

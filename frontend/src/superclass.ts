@@ -162,4 +162,3 @@ function get_all_subclasses(superclass: string): string[] {
 }
 
 export const all_items = get_all_subclasses('item');
-export const all_entities = get_all_subclasses('entity');

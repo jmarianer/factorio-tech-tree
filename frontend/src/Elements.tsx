@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Item } from './FactorioData';
+import { Item } from './FactorioTypes';
 
 export function ItemIcon({ item }: { item: Item }) {
   const { regime } = useParams();

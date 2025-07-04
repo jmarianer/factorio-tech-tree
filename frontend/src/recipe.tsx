@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
 import { Dialog } from "./Dialog";
 import { BBCode } from "./BBCode";
-import { ItemWithCount } from "./FactorioData";
+import { ItemWithCount } from './FactorioTypes';
 import { ItemIcon } from "./Elements";
 
 function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }) {
