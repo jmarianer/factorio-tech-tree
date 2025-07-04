@@ -47,7 +47,7 @@ export default function Recipe() {
         <h2>Crafted in:</h2>
         {recipe.crafted_in.map(([entity, time]) => (
           <a key={entity.name} className="item" href={`item_${entity.name}.html`}>
-            {/* <ItemIcon entity={entity} /> */}
+            {/* TODO entity icon here! <ItemIcon entity={entity} /> */}
             {entity.localized_title('en')} ({time.toFixed(2)}s)
           </a>
         ))}

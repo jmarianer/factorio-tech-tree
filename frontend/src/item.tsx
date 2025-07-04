@@ -1,11 +1,11 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
 import { useData } from './DataContext';
-import { ItemWithCount, Recipe } from './FactorioTypes';
-import { ItemIcon } from './Elements';
+import { ItemWithCount } from './FactorioTypes';
+import { ItemIcon, RenderRecipe } from './Elements';
 import { BBCode } from './BBCode';
 
-function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }) {
+export function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }) {
   return (
     <div style={{ position: 'relative' }}>
       <span className="quantity">{itemWithCount.quantity}</span>
@@ -14,34 +14,14 @@ function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }
   );
 }
 
-function RenderRecipe({ recipe }: { recipe: Recipe }) {
-  const { regime } = useParams();
-  return (
-    <div className="recipe-container">
-      <div className="recipe">
-        {recipe.ingredients.map((ingredient: ItemWithCount) => (
-          <RenderItemWithCount key={ingredient.name} itemWithCount={ingredient} />
-        ))}
-        <img src="/chevron.svg" className="chevron" />
-        {recipe.products.map((product: ItemWithCount) => (
-          <RenderItemWithCount key={product.name} itemWithCount={product} />
-        ))}
-      </div>
-      <Link to={`/${regime}/recipe/${recipe.name}`} className="more-info">
-        <img src="/double-chevron.svg" className="double-chevron" />
-      </Link>
-    </div>
-  );
-}
-
 export default function Item() {
-  const { regime, type, name } = useParams();
+  const { regime, name } = useParams();
   const data = useData();
   const item = data.items[name!];
 
   return Dialog(`Item: ${item.localized_title('en')}`,
     <>
-      <img src={`/generated/${regime}/icons/${type}/${name}.png`} alt={name} />
+      <img src={`/generated/${regime}/icons/${item.type}/${name}.png`} alt={name} />
       <div className="description">
         <BBCode code={item.description('en')} />
       </div>
