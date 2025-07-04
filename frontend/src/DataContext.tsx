@@ -17,7 +17,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode; }) => {
     };
 
     loadData();
-  }, []);
+  }, [regime]);
 
   if (loading) {
     return <div>Loading...</div>;

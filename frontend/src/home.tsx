@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useData } from './DataContext';
 import _ from 'lodash';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
+import { ItemIcon } from './Elements';
 
 export default function Home() {
   const { regime } = useParams();
@@ -48,7 +49,7 @@ export default function Home() {
           {_(subgroup)
             .orderBy((item) => item.order)
             .value()
-            .map((item) => <Link to={`${item.type}/${item.name}`} key={item.name}><img className='icon' src={`/generated/${regime}/icons/${item.type}/${item.name}.png`} alt={item.name} /></Link>)}
+            .map((item) => <ItemIcon key={item.name} item={item} />)}
           <br />
       </div>)}
     </>);
