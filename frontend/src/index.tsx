@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { DataProvider } from './DataContext';
 import Home from './home';
 import Item from './item';
+import Recipe from './recipe';
 import './factorio.css';
 
 const root = ReactDOM.createRoot(
@@ -14,6 +15,7 @@ function RegimeLayout() {
   return <DataProvider>
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/recipe/:name" element={<Recipe />} />
       <Route path="/:type/:name" element={<Item />} />
     </Routes>
   </DataProvider>;

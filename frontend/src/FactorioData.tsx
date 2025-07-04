@@ -8,6 +8,15 @@ export class FactorioData {
   readonly entities: Record<string, Entity>;
   readonly locale: Record<string, any>;
   readonly recipes: Record<string, Recipe>;
+  readonly character = new Entity(this, {
+    name: 'character',
+    type: 'character',
+    flags: [],
+    json: {
+      crafting_categories: ['crafting'],
+      crafting_speed: 1,
+    },
+  });
 
   constructor(data: any) {
     const createRecord = <T extends Base>(items: Record<string, object>, ClassType: new (data: FactorioData, item: any) => T): Record<string, T> => {
@@ -54,8 +63,6 @@ export class FactorioData {
   }
 
   localizeArray(language: string, array: string | number | string[]): string {
-    // Helper for replacing __n__ with localized value
-
     if (typeof array === 'string') {
       return array;
     } else if (typeof array === 'number') {
@@ -69,6 +76,29 @@ export class FactorioData {
         }));
     }
   }
+
+  get_crafting_machines_for(crafting_category: string): [Entity, number][] {
+    const crafting_machine_types = [
+      "assembling-machine",
+      "furnace",
+      "rocket-silo"
+    ];
+
+    const result: [Entity, number][] = [];
+
+    if (crafting_category === 'crafting') {
+      result.push([this.character, 1]);
+    }
+
+    for (const machine of Object.values(this.entities)) {
+      // TODO we shouldn't use machine.json here
+      if (crafting_machine_types.includes(machine.type) && machine.json.crafting_categories.includes(crafting_category)) {
+        result.push([machine, machine.json.crafting_speed]);
+      }
+    }
+
+    return result;
+  }
 }
 
 class Base {
@@ -76,7 +106,7 @@ class Base {
   readonly type: string;
   readonly flags: string[];
 
-  constructor(protected data: FactorioData, protected json: any) {
+  constructor(protected readonly data: FactorioData, public readonly json: any) {
     this.name = json.name || '';
     this.type = json.type || '';
     this.flags = json.flags || [];
@@ -158,7 +188,6 @@ export class Item extends Base {
 
 export class Entity extends Base {
 }
-
 
 export class ItemWithCount {
   constructor(
@@ -261,6 +290,25 @@ export class Recipe extends Base {
     this.time = json.energy_required || 0.5;
     this.crafting_category = json.category || 'crafting';
     this.hidden = json.hidden || false;
+  }
+
+  get fallback(): Item | null {
+    let main_item_name: string;
+    if ('result' in this.json) {
+      main_item_name = String(this.json.result);
+    } else if ('main_product' in this.json) {
+      main_item_name = String(this.json.main_product);
+    } else if (this.products.length === 1) {
+      main_item_name = String(this.products[0].name);
+    } else {
+      main_item_name = this.name;
+    }
+    return this.data.items[main_item_name];
+  }
+
+  get crafted_in(): [Entity, number][] {
+    return this.data.get_crafting_machines_for(this.crafting_category)
+      .map(([item, speed]) => [item, this.time / speed]);
   }
 } 
 
