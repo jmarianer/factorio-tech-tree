@@ -10,9 +10,28 @@
                 "dump-data",
                 "-q",
                 "--output",
-                "assets/base",
+                "frontend/public/generated/base",
                 "--factorio-base",
                 "/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data"
+            ],
+            "console": "integratedTerminal"
+        }
+        {
+            "name": "Spacex",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "backend/cli.py",
+            "args": [
+                "dump-data",
+                "-q",
+                "--output",
+                "frontend/public/generated/spacex",
+                "--factorio-base",
+                "/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data",
+                "--mods",
+                "space-exploration",
+                "--mods",
+                "space-exploration-postprocess"
             ],
             "console": "integratedTerminal"
         }
