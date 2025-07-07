@@ -2,9 +2,11 @@ import base64
 import io
 import re
 from lupa.lua52 import LuaRuntime
-from typing import Any
+from typing import Any, Iterable
 from PIL.Image import Image
-
+from pathlib import Path
+from mod_reader import ModReader
+from animation import get_animation, get_animation_specs
 
 # TODO: Figure out if this can be done more elegantly
 from typing import TYPE_CHECKING
@@ -58,3 +60,11 @@ def parse_dependencies(dependency_spec: str) -> tuple[str, str, str]:
         return match['prefix'], match['mod'], match['rest']
     else:
         raise
+
+
+def write_animation(filename: Path, animation_data: Any, data_reader: ModReader) -> None:
+    animation_spec = get_animation_specs(animation_data)
+    animation = get_animation(data_reader, animation_spec)
+    image_iter = iter(animation)
+    first_image = next(image_iter)
+    first_image.save(filename, save_all=True, append_images=image_iter, optimize=True)
