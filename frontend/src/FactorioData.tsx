@@ -1,4 +1,4 @@
-import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret } from './FactorioTypes';
+import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab } from './FactorioTypes';
 import { all_items } from './superclass';
 import _ from 'lodash';
 
@@ -47,7 +47,7 @@ const all_entities = {
   'heat-interface': Entity,
   'heat-pipe': Entity,
   'inserter': Entity,
-  'lab': Entity,
+  'lab': Lab,
   'lamp': Entity,
   'land-mine': Entity,
   'linked-container': Entity,

@@ -94,10 +94,6 @@ export class Entity extends Base {
 }
 
 export class Turret extends Entity {
-  constructor(data: FactorioData, json: any) {
-    super(data, json);
-  }
-
   get ammo_categories(): [string, Item[]][] {
     // TODO understand, and also fix localization
     const attack_params = this.json['attack_parameters'];
@@ -146,6 +142,17 @@ export class CraftingMachine extends Entity {
     super(data, json);
     this.crafting_categories = json.crafting_categories || [];
     this.crafting_speed = json.crafting_speed || 1;
+  }
+}
+
+export class Lab extends Entity {
+  researching_speed: number;
+  inputs: string[];
+
+  constructor(data: FactorioData, json: any) {
+    super(data, json);
+    this.researching_speed = json.researching_speed || 1;
+    this.inputs = json.inputs || [];
   }
 }
 

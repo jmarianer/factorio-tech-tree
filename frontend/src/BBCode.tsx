@@ -17,6 +17,8 @@ const factorioPreset = createPreset({
       content: node.content,
     }),
   br: () => ({ tag: 'br' }),
+  // TODO fix img
+  img: () => ({ tag: 'i' }),
 })
 
 export function BBCode(props: { code: string }) {

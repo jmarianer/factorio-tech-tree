@@ -2,12 +2,15 @@ import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
 import { BBCode } from "./BBCode";
 import { Dialog } from "./Dialog";
-import { CraftingMachine as CraftingMachineType, Turret as TurretType } from "./FactorioTypes";
+import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType } from "./FactorioTypes";
 import { ItemIcon, RenderRecipe } from "./Elements";
 
 function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
   const data = useData();
+  const { regime } = useParams();
   return <>
+    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
+    Crafting speed: {entity.crafting_speed} <br />
     <h2>Crafting</h2>
     {entity.crafting_categories.map((category) => (
       <div key={category}>
@@ -19,6 +22,18 @@ function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
         </div>
       </div>
     ))}
+  </>;
+} 
+
+function Lab({ entity }: { entity: LabType }) {
+  const data = useData();
+  const { regime } = useParams();
+  return <>
+    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
+    Research speed: {entity.researching_speed} <br />
+    Inputs: {entity.inputs.map((input) => (
+      <ItemIcon key={input} item={data.items[input]} />
+    ))} <br />
   </>;
 } 
 
@@ -57,6 +72,8 @@ export default function Entity() {
         <BBCode code={entity.description('en')} />
       </div>
     </>,
-    entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> : entity instanceof TurretType ? <Turret entity={entity} /> : null
+    entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> :
+    entity instanceof LabType ? <Lab entity={entity} /> :
+    entity instanceof TurretType ? <Turret entity={entity} /> : null
   );
 }
