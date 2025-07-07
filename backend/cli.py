@@ -2,7 +2,6 @@ import click
 import json
 from pathlib import Path
 from factorio_data import ModReader, get_factorio_data
-from animation import get_animation, get_animation_specs
 from utils import write_animation
 from icon import get_factorio_icon, get_icon_specs
 import concurrent.futures
@@ -53,11 +52,19 @@ def generate_assembling_machine_animation(
     name: str,
     object_data: dict
 ) -> None:
-    animation_data = (
-        get_nested_value(object_data.get('animation', []), 'north', 'layers') +
-        get_nested_value(object_data.get('idle_animation', []), 'north', 'layers')
-    )
-    
+    animation_data = []
+    if 'animation' in object_data:
+        animation_data.extend(get_nested_value(object_data['animation'], 'north', 'layers'))
+    if 'idle_animation' in object_data:
+        animation_data.extend(get_nested_value(object_data['idle_animation'], 'north', 'layers'))
+    if 'working_visualisations' in object_data:
+        for s in object_data['working_visualisations']:
+            if 'animation' in s:
+                if 'layers' in s['animation']:
+                    animation_data.extend(s['animation']['layers'])
+                else:
+                    animation_data.append(s['animation'])
+
     if animation_data:
         write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
 

@@ -1,6 +1,6 @@
 import math
 from typing import Any, Generator, Iterable, NamedTuple, Optional
-from PIL import Image
+from PIL import Image, ImageChops
 
 from mod_reader import ModReader
 
@@ -19,6 +19,7 @@ class Layer(NamedTuple):
     draw_as_shadow: bool
     filename: Optional[str]
     stripes: Optional[list[dict[str, Any]]]
+    blend_mode: str
 
     def get_image(self, reader: ModReader, frame_no: int) -> Image.Image:
         if self.filename:
@@ -46,7 +47,7 @@ class Layer(NamedTuple):
 
 
 def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.Image, None, None]:
-    layers = [l for l in spec if not l.draw_as_shadow and not l.draw_as_light]
+    layers = [l for l in spec if not l.draw_as_shadow]
     frame_count = math.lcm(*(l.frame_count for l in layers))
 
     x_start = min(layer.shift[0] * 64 for layer in layers)
@@ -71,7 +72,19 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
             shift_y += y_origin - layer.height / 2
             offset = int(shift_x), int(shift_y)
 
-            frame.alpha_composite(image, offset)
+            if layer.blend_mode == 'additive':
+                # TODO
+                # (1) There's got to be a better way to zero out all the alpha.
+                # (2) Add the other blend modes. https://lua-api.factorio.com/1.1.110/types/BlendMode.html
+                # (3) Consolidate this code with the icon.py code.
+                offset_image = Image.new('RGBA', frame.size, (0, 0, 0, 0))
+                offset_image.paste(image, offset)
+                offset_image_data = list(offset_image.getdata())
+                offset_image_data = list(map(lambda x: (x[0], x[1], x[2], 0), offset_image_data))
+                offset_image.putdata(offset_image_data)  # type: ignore
+                frame = ImageChops.add(frame, offset_image)
+            else:  # normal
+                frame.alpha_composite(image, offset)
 
         yield frame
     return
@@ -96,4 +109,5 @@ def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
                 draw_as_light=s.get('draw_as_light', False),
                 draw_as_shadow=s.get('draw_as_shadow', False),
                 filename=s.get('filename', None),
-                stripes=s.get('stripes', None))
+                stripes=s.get('stripes', None),
+                blend_mode=s.get('blend_mode', 'normal'))

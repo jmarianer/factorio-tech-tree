@@ -16,7 +16,7 @@
                 "/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data"
             ],
             "console": "integratedTerminal"
-        }
+        },
         {
             "name": "Spacex",
             "type": "debugpy",
