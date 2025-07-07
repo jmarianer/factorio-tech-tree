@@ -21,6 +21,13 @@ class Layer(NamedTuple):
     stripes: Optional[list[dict[str, Any]]]
     blend_mode: str
 
+    def get_bounds(self) -> tuple[int, int, int, int]:
+        x_start = self.shift[0] * 64 - self.width / 2
+        y_start = self.shift[1] * 64 - self.height / 2
+        x_end = x_start + self.width
+        y_end = y_start + self.height
+        return int(x_start), int(y_start), int(x_end), int(y_end)
+
     def get_image(self, reader: ModReader, frame_no: int) -> Image.Image:
         if self.filename:
             raw = reader.get_image(self.filename)
@@ -49,15 +56,16 @@ class Layer(NamedTuple):
 def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.Image, None, None]:
     layers = [l for l in spec if not l.draw_as_shadow]
     frame_count = math.lcm(*(l.frame_count for l in layers))
+    bounding_boxes = [l.get_bounds() for l in layers]
 
-    x_start = min(layer.shift[0] * 64 for layer in layers)
-    y_start = min(layer.shift[1] * 64 for layer in layers)
-    x_end = max(layer.shift[0] * 64 + layer.width for layer in layers)
-    y_end = max(layer.shift[1] * 64 + layer.height for layer in layers)
+    x_start = min(bb[0] for bb in bounding_boxes)
+    y_start = min(bb[1] for bb in bounding_boxes)
+    x_end = max(bb[2] for bb in bounding_boxes)
+    y_end = max(bb[3] for bb in bounding_boxes)
     width = int(x_end - x_start)
     height = int(y_end - y_start)
-    x_origin = width / 2 - x_start
-    y_origin = height / 2 - y_start
+    x_origin = width - x_end
+    y_origin = height - y_end
     for frame_no in range(frame_count):
         frame = Image.new(mode='RGBA', size=(width, height))
 
@@ -65,12 +73,8 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
             layer_frame_no = frame_no % layer.frame_count
 
             image = layer.get_image(reader, layer_frame_no)
-            shift_x, shift_y = layer.shift
-            shift_x *= 64
-            shift_y *= 64
-            shift_x += x_origin - layer.width / 2
-            shift_y += y_origin - layer.height / 2
-            offset = int(shift_x), int(shift_y)
+            shift_x, shift_y, _1, _2 = layer.get_bounds()
+            offset = int(shift_x + x_origin), int(shift_y + y_origin)
 
             if layer.blend_mode == 'additive':
                 # TODO

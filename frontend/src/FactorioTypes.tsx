@@ -145,6 +145,9 @@ export class CraftingMachine extends Entity {
   }
 }
 
+export class MiningDrill extends Entity {
+}
+
 export class Lab extends Entity {
   researching_speed: number;
   inputs: string[];

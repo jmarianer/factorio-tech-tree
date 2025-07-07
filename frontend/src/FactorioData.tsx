@@ -1,4 +1,4 @@
-import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab } from './FactorioTypes';
+import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill } from './FactorioTypes';
 import { all_items } from './superclass';
 import _ from 'lodash';
 
@@ -52,7 +52,7 @@ const all_entities = {
   'land-mine': Entity,
   'linked-container': Entity,
   'market': Entity,
-  'mining-drill': Entity,
+  'mining-drill': MiningDrill,
   'offshore-pump': Entity,
   'pipe': Entity,
   'infinity-pipe': Entity,

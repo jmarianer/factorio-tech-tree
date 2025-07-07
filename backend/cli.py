@@ -68,6 +68,32 @@ def generate_assembling_machine_animation(
     if animation_data:
         write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
 
+def generate_mining_drill_animation(
+    data_reader: ModReader,
+    output_path: Path,
+    type_name: str,
+    name: str,
+    object_data: dict
+) -> None:
+    animation_data = []
+    if 'animation' in object_data:
+        animation_data.extend(get_nested_value(object_data['animation'], 'north', 'layers'))
+    graphics_set = object_data.get('graphics_set', {})
+    if 'animation' in graphics_set:
+        animation_data.extend(get_nested_value(graphics_set['animation'], 'north', 'layers'))
+    if 'idle_animation' in graphics_set:
+        animation_data.extend(get_nested_value(graphics_set['idle_animation'], 'north', 'layers'))
+    if 'working_visualisations' in graphics_set:
+        for s in graphics_set['working_visualisations']:
+            animation = s.get('animation', s.get('north_animation', {}))
+            if animation:
+                if 'layers' in animation:
+                    animation_data.extend(animation['layers'])
+                else:
+                    animation_data.append(animation)
+    if animation_data:
+        write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
+
 def generate_lab_animation(
     data_reader: ModReader,
     output_path: Path,
@@ -111,6 +137,8 @@ def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, 
                     futures.append(executor.submit(generate_assembling_machine_animation, reader, output, type_name, name, object_data))
                 if type_name == 'lab':
                     futures.append(executor.submit(generate_lab_animation, reader, output, type_name, name, object_data))
+                if type_name == 'mining-drill':
+                    futures.append(executor.submit(generate_mining_drill_animation, reader, output, type_name, name, object_data))
 
     for future in concurrent.futures.as_completed(futures):
         future.result()

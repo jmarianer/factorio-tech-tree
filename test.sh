@@ -2,6 +2,7 @@
 # exported in the calling shell.
 mkdir -p frontend/public/generated/{base,spacex,ind,angelbobs,k2spacex}
 
+set -x
 time python backend/cli.py dump-data -q --output frontend/public/generated/base
 time python backend/cli.py dump-data -q --output frontend/public/generated/spacex --mods space-exploration --mods space-exploration-postprocess
 # python backend/cli.py dump-data -q --output frontend/public/generated/k2spacex --mods space-exploration --mods space-exploration-postprocess --mods Krastorio2
