@@ -80,7 +80,11 @@ class ModReader:
                 for f in glob(f'{mod_dir}/{filename}')]
 
     @cache
-    def get_image(self, path: str) -> Image.Image:
-        return Image \
+    def get_image(self, path: str, alpha: bool = True) -> Image.Image:
+        image = Image \
             .open(io.BytesIO(self.get_binary(path))) \
             .convert('RGBA')
+        if not alpha:
+            r, g, b, _ = image.split()
+            image = Image.merge('RGBA', (r, g, b, Image.new('L', image.size, 0)))
+        return image

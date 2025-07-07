@@ -39,7 +39,7 @@ class Layer(NamedTuple):
             assert self.run_mode == 'forward'
 
         if self.filename:
-            raw = reader.get_image(self.filename)
+            raw = reader.get_image(self.filename, self.blend_mode != 'additive')
             row = frame_no // self.line_length
             col = frame_no % self.line_length
         else:
@@ -51,7 +51,7 @@ class Layer(NamedTuple):
                 else:
                     break
 
-            raw = reader.get_image(stripe['filename'])
+            raw = reader.get_image(stripe['filename'], self.blend_mode != 'additive')
             row = frame_no // stripe['width_in_frames']
             col = frame_no % stripe['width_in_frames']
 
@@ -90,14 +90,11 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
 
             if layer.blend_mode == 'additive':
                 # TODO
-                # (1) There's got to be a better way to zero out all the alpha.
-                # (2) Add the other blend modes. https://lua-api.factorio.com/1.1.110/types/BlendMode.html
-                # (3) Consolidate this code with the icon.py code.
+                # (1) Add the other blend modes. https://lua-api.factorio.com/1.1.110/types/BlendMode.html
+                # (2) Consolidate this code with the icon.py code.
+                # (3) See the implementation of Image.alpha_composite on how to make the add() call faster.
                 offset_image = Image.new('RGBA', frame.size, (0, 0, 0, 0))
                 offset_image.paste(image, offset)
-                offset_image_data = list(offset_image.getdata())
-                offset_image_data = list(map(lambda x: (x[0], x[1], x[2], 0), offset_image_data))
-                offset_image.putdata(offset_image_data)  # type: ignore
                 frame = ImageChops.add(frame, offset_image)
             else:  # normal
                 frame.alpha_composite(image, offset)
