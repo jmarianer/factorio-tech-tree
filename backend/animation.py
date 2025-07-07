@@ -22,10 +22,10 @@ class Layer(NamedTuple):
     blend_mode: str
 
     def get_bounds(self) -> tuple[int, int, int, int]:
-        x_start = self.shift[0] * 64 - self.width / 2
-        y_start = self.shift[1] * 64 - self.height / 2
-        x_end = x_start + self.width
-        y_end = y_start + self.height
+        x_start = self.shift[0] * 32 - self.width / 2 * self.scale
+        y_start = self.shift[1] * 32 - self.height / 2 * self.scale
+        x_end = x_start + self.width * self.scale
+        y_end = y_start + self.height * self.scale
         return int(x_start), int(y_start), int(x_end), int(y_end)
 
     def get_image(self, reader: ModReader, frame_no: int) -> Image.Image:
@@ -46,11 +46,14 @@ class Layer(NamedTuple):
             row = frame_no // stripe['width_in_frames']
             col = frame_no % stripe['width_in_frames']
 
-        return raw.crop((
+        position = (
             self.x + col * self.width,
             self.y + row * self.height,
             self.x + (col+1) * self.width,
-            self.y + (row+1) * self.height))
+            self.y + (row+1) * self.height)
+        size = (int(self.width * self.scale), int(self.height * self.scale))
+
+        return raw.crop(position).resize(size)
 
 
 def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.Image, None, None]:
