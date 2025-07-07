@@ -20,6 +20,7 @@ class Layer(NamedTuple):
     filename: Optional[str]
     stripes: Optional[list[dict[str, Any]]]
     blend_mode: str
+    run_mode: str
 
     def get_bounds(self) -> tuple[int, int, int, int]:
         x_start = self.shift[0] * 32 - self.width / 2 * self.scale
@@ -29,6 +30,14 @@ class Layer(NamedTuple):
         return int(x_start), int(y_start), int(x_end), int(y_end)
 
     def get_image(self, reader: ModReader, frame_no: int) -> Image.Image:
+        if self.run_mode == 'forward-then-backward':
+            if frame_no >= self.frame_count // 2 + 1:
+                frame_no = self.frame_count - frame_no
+        elif self.run_mode == 'backward':
+            frame_no = self.frame_count - 1 - frame_no
+        else:
+            assert self.run_mode == 'forward'
+
         if self.filename:
             raw = reader.get_image(self.filename)
             row = frame_no // self.line_length
@@ -103,12 +112,16 @@ def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
             yield from get_animation_specs(s)
         else:
             s.update(s.get('hr_version', {}))
+            run_mode = s.get('run_mode', 'forward')
+            frame_count = s.get('frame_count', 1)
+            if run_mode == 'forward-then-backward':
+                frame_count = frame_count * 2 - 2
             yield Layer(
                 height=s['height'],
                 width=s['width'],
                 x=s.get('x', 0),
                 y=s.get('y', 0),
-                frame_count=s.get('frame_count', 1),
+                frame_count=frame_count,
                 line_length=s.get('line_length', 1),
                 scale=s.get('scale', 1),
                 shift=s.get('shift', (0, 0)),
@@ -117,4 +130,5 @@ def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
                 draw_as_shadow=s.get('draw_as_shadow', False),
                 filename=s.get('filename', None),
                 stripes=s.get('stripes', None),
-                blend_mode=s.get('blend_mode', 'normal'))
+                blend_mode=s.get('blend_mode', 'normal'),
+                run_mode=run_mode)
