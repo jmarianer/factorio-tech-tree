@@ -86,18 +86,20 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
 
             image = layer.get_image(reader, layer_frame_no)
             shift_x, shift_y, _1, _2 = layer.get_bounds()
-            offset = int(shift_x + x_origin), int(shift_y + y_origin)
+            offset_x = int(shift_x + x_origin)
+            offset_y = int(shift_y + y_origin)
+
+            background = frame.crop((offset_x, offset_y, offset_x + image.width, offset_y + image.height))
 
             if layer.blend_mode == 'additive':
                 # TODO
                 # (1) Add the other blend modes. https://lua-api.factorio.com/1.1.110/types/BlendMode.html
                 # (2) Consolidate this code with the icon.py code.
-                # (3) See the implementation of Image.alpha_composite on how to make the add() call faster.
-                offset_image = Image.new('RGBA', frame.size, (0, 0, 0, 0))
-                offset_image.paste(image, offset)
-                frame = ImageChops.add(frame, offset_image)
+                result = ImageChops.add(background, image)
             else:  # normal
-                frame.alpha_composite(image, offset)
+                result = Image.alpha_composite(background, image)
+
+            frame.paste(result, (offset_x, offset_y))
 
         yield frame
     return
