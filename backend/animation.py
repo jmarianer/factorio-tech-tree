@@ -10,7 +10,7 @@ class Layer(NamedTuple):
     width: int
     x: int
     y: int
-    frame_count: int
+    frame_sequence: list[int]
     line_length: int
     scale: float
     shift: tuple[float, float]
@@ -20,7 +20,6 @@ class Layer(NamedTuple):
     filename: Optional[str]
     stripes: Optional[list[dict[str, Any]]]
     blend_mode: str
-    run_mode: str
 
     def get_bounds(self) -> tuple[int, int, int, int]:
         x_start = self.shift[0] * 32 - self.width / 2 * self.scale
@@ -30,14 +29,7 @@ class Layer(NamedTuple):
         return int(x_start), int(y_start), int(x_end), int(y_end)
 
     def get_image(self, reader: ModReader, frame_no: int) -> Image.Image:
-        if self.run_mode == 'forward-then-backward':
-            if frame_no >= self.frame_count // 2 + 1:
-                frame_no = self.frame_count - frame_no
-        elif self.run_mode == 'backward':
-            frame_no = self.frame_count - 1 - frame_no
-        else:
-            assert self.run_mode == 'forward'
-
+        frame_no = self.frame_sequence[frame_no] - 1
         if self.filename:
             raw = reader.get_image(self.filename, self.blend_mode != 'additive')
             row = frame_no // self.line_length
@@ -66,8 +58,9 @@ class Layer(NamedTuple):
 
 
 def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.Image, None, None]:
-    layers = [l for l in spec if not l.draw_as_shadow]
-    frame_count = math.lcm(*(l.frame_count for l in layers))
+    spec = list(spec)
+    layers = [l for l in spec if l.draw_as_shadow] + [l for l in spec if not l.draw_as_shadow]
+    frame_count = math.lcm(*(len(l.frame_sequence) for l in layers))
     bounding_boxes = [l.get_bounds() for l in layers]
 
     x_start = min(bb[0] for bb in bounding_boxes)
@@ -82,7 +75,7 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
         frame = Image.new(mode='RGBA', size=(width, height))
 
         for layer in layers:
-            layer_frame_no = frame_no % layer.frame_count
+            layer_frame_no = frame_no % len(layer.frame_sequence)
 
             image = layer.get_image(reader, layer_frame_no)
             shift_x, shift_y, _1, _2 = layer.get_bounds()
@@ -112,15 +105,17 @@ def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
         else:
             s.update(s.get('hr_version', {}))
             run_mode = s.get('run_mode', 'forward')
-            frame_count = s.get('frame_count', 1)
+            frame_sequence = s.get('frame_sequence', list(range(1, s.get('frame_count', 1) + 1)))
             if run_mode == 'forward-then-backward':
-                frame_count = frame_count * 2 - 2
+                frame_sequence = frame_sequence + frame_sequence[-2:0:-1]
+            elif run_mode == 'backward':
+                frame_sequence = frame_sequence[::-1]
+
             yield Layer(
                 height=s['height'],
                 width=s['width'],
                 x=s.get('x', 0),
                 y=s.get('y', 0),
-                frame_count=frame_count,
                 line_length=s.get('line_length', 1),
                 scale=s.get('scale', 1),
                 shift=s.get('shift', (0, 0)),
@@ -130,4 +125,4 @@ def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
                 filename=s.get('filename', None),
                 stripes=s.get('stripes', None),
                 blend_mode=s.get('blend_mode', 'normal'),
-                run_mode=run_mode)
+                frame_sequence=frame_sequence)
