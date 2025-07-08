@@ -38,17 +38,20 @@ def generate_assembling_machine_animation(
     object_data: dict
 ) -> None:
     animation_data = []
+    def add_animation_data(animation):
+        if 'layers' in animation:
+            animation_data.extend(animation['layers'])
+        else:
+            animation_data.append(animation)
+
     if 'animation' in object_data:
-        animation_data.extend(get_nested_value(object_data['animation'], 'north', 'layers'))
+        add_animation_data(get_nested_value(object_data['animation'], 'north'))
     if 'idle_animation' in object_data:
-        animation_data.extend(get_nested_value(object_data['idle_animation'], 'north', 'layers'))
+        add_animation_data(get_nested_value(object_data['idle_animation'], 'north'))
     if 'working_visualisations' in object_data:
         for s in object_data['working_visualisations']:
             if 'animation' in s:
-                if 'layers' in s['animation']:
-                    animation_data.extend(s['animation']['layers'])
-                else:
-                    animation_data.append(s['animation'])
+                add_animation_data(s['animation'])
 
     if animation_data:
         write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)

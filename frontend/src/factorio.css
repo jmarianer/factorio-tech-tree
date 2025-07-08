@@ -41,6 +41,7 @@ div.dialog-wrapper {
 div.dialog-header {
     display: flex;
     padding: 1em;
+    overflow-x: auto;
 }
 
 div.dialog-content {

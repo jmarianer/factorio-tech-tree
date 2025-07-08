@@ -16,7 +16,8 @@ const regimes = [
   ["base", "Base"],
   ["spacex", "Space Exploration"],
   ["ind", "Industrial Revolution"],
-  ["k2spacex", "Space Exploration + Krastorio 2"]
+  ["k2spacex", "Space Exploration + Krastorio 2"],
+  ["angelbobs", "Angel's and Bob'sMods"]
 ];
 
 function ListRegimes() {
