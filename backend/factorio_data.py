@@ -69,6 +69,8 @@ def _init_locale(reader: ModReader, mod_list: list[str]) -> dict[str, str]:
 
 def _init_lua(reader: ModReader, base_dir: Path, quiet: bool) -> lupa.lua52.LuaRuntime:
     def lua_package_searcher(require_argument: str) -> Any:
+        original_require_argument = require_argument
+
         # Lua allows "require foo.bar.baz", "require foo/bar/baz" and "require
         # foo/bar/baz.lua". Convert the former two to the latter, canonical form.
         if '/' not in require_argument:
@@ -105,17 +107,18 @@ def _init_lua(reader: ModReader, base_dir: Path, quiet: bool) -> lupa.lua52.LuaR
 
             return lua.eval(
                 '''
-                (function(new_dir_stack_entry, contents, filename)
+                (function(new_dir_stack_entry, contents, filename, original_require_argument)
                     return function ()
                         table.insert(dir_stack, 1, new_dir_stack_entry)
-                        ret = load(contents, filename)()
+                        ret = load(contents, filename)(original_require_argument)
                         table.remove(dir_stack, 1)
                         return ret
                     end
                 end)(...)''',
                 new_dir_stack_entry,
                 contents,
-                path)
+                path,
+                original_require_argument)
 
     def lua_log(value: str) -> None:
         if not quiet:

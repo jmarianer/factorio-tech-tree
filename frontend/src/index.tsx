@@ -15,7 +15,8 @@ const root = ReactDOM.createRoot(
 const regimes = [
   ["base", "Base"],
   ["spacex", "Space Exploration"],
-  ["ind", "Industrial Revolution"]
+  ["ind", "Industrial Revolution"],
+  ["k2spacex", "Space Exploration + Krastorio 2"]
 ];
 
 function ListRegimes() {
