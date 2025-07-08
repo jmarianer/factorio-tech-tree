@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { DataProvider } from './DataContext';
 import Home from './home';
 import Item from './item';
@@ -11,6 +11,25 @@ import './factorio.css';
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
+const regimes = [
+  ["base", "Base"],
+  ["spacex", "Space Exploration"],
+  ["ind", "Industrial Revolution"]
+];
+
+function ListRegimes() {
+  return <div>
+    <h1>Regimes</h1>
+    <ul>
+      {regimes.map(([regime, name]) => (
+        <li key={regime}>
+          <Link to={`/${regime}`}>{name}</Link>
+        </li>
+      ))}
+    </ul>
+  </div>;
+}
 
 function RegimeLayout() {
   return <DataProvider>
@@ -27,6 +46,7 @@ root.render(
   <React.StrictMode>
     <Router>
       <Routes>
+        <Route path="/" element={<ListRegimes />} />
         <Route path="/:regime/*" element={<RegimeLayout />} />
       </Routes>
     </Router>

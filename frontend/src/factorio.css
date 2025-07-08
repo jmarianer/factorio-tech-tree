@@ -158,6 +158,10 @@ h2.group span {
     overflow: hidden;
 }
 
+h2.group img {
+    width: 128px;
+}
+
 a.item {
     display: flex;
     align-items: center;
