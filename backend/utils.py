@@ -2,11 +2,12 @@ import base64
 import io
 import re
 from lupa.lua52 import LuaRuntime
-from typing import Any, Iterable
+from typing import Any
 from PIL.Image import Image
 from pathlib import Path
 from mod_reader import ModReader
 from animation import get_animation, get_animation_specs
+import math
 
 # TODO: Figure out if this can be done more elegantly
 from typing import TYPE_CHECKING
@@ -14,6 +15,19 @@ if TYPE_CHECKING:
     from lupa.lua52 import LuaObject
 else:
     LuaObject = int
+
+
+def sanitize_floats(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_floats(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_floats(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isinf(obj):
+            return "Infinity" if obj > 0 else "-Infinity"
+        elif math.isnan(obj):
+            return "NaN"
+    return obj
 
 
 def lua_table_to_python(obj: LuaObject) -> Any:

@@ -2,24 +2,9 @@ import click
 import json
 from pathlib import Path
 from factorio_data import ModReader, get_factorio_data
-from utils import write_animation
+from utils import write_animation, sanitize_floats
 from icon import get_factorio_icon, get_icon_specs
 import concurrent.futures
-import math
-
-
-def sanitize_floats(obj):
-    if isinstance(obj, dict):
-        return {k: sanitize_floats(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [sanitize_floats(item) for item in obj]
-    elif isinstance(obj, float):
-        if math.isinf(obj):
-            return "Infinity" if obj > 0 else "-Infinity"
-        elif math.isnan(obj):
-            return "NaN"
-    return obj
-
 
 @click.group()
 def cli() -> None:
