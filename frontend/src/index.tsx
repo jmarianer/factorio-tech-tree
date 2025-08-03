@@ -8,6 +8,7 @@ import Entity from './entity';
 import Recipe from './recipe';
 import './factorio.css';
 import { TechTree } from './techtree';
+import { Dialog } from './Dialog';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -18,20 +19,18 @@ const regimes = [
   ["spacex", "Space Exploration"],
   ["ind", "Industrial Revolution"],
   ["k2spacex", "Space Exploration + Krastorio 2"],
-  ["angelbobs", "Angel's and Bob'sMods"]
+  ["angelbobs", "Angel's and Bob's Mods"]
 ];
 
 function ListRegimes() {
-  return <div>
-    <h1>Regimes</h1>
-    <ul>
+  return Dialog('Select a regime',
+    <></>,
+    <div>
       {regimes.map(([regime, name]) => (
-        <li key={regime}>
-          <Link to={`/${regime}`}>{name}</Link>
-        </li>
+        <Link className="regime" key={regime} to={`/${regime}`}>{name}</Link>
       ))}
-    </ul>
-  </div>;
+    </div>
+  );
 }
 
 function RegimeLayout() {

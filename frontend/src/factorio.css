@@ -182,3 +182,8 @@ a.item {
     align-items: center;
     text-align: center;
 }
+
+.regime {
+    display: block;
+    color: #d2d2d2;
+}
