@@ -7,6 +7,7 @@ import Item from './item';
 import Entity from './entity';
 import Recipe from './recipe';
 import './factorio.css';
+import { TechTree } from './techtree';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -37,6 +38,7 @@ function RegimeLayout() {
   return <DataProvider>
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/tech" element={<TechTree />} />
       <Route path="/recipe/:name" element={<Recipe />} />
       <Route path="/item/:name" element={<Item />} />
       <Route path="/entity/:name" element={<Entity />} />

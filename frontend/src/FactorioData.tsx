@@ -1,4 +1,4 @@
-import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill } from './FactorioTypes';
+import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill, Tech } from './FactorioTypes';
 import { all_items } from './superclass';
 import _ from 'lodash';
 
@@ -127,6 +127,7 @@ export class FactorioData {
   readonly entities: Record<string, Entity>;
   readonly locale: Record<string, any>;
   readonly recipes: Record<string, Recipe>;
+  readonly techs: Record<string, Tech>;
   readonly character = new Entity(this, {
     name: 'character',
     type: 'character',
@@ -156,6 +157,7 @@ export class FactorioData {
     this.subgroups = createRecord(data['raw']['item-subgroup'], Subgroup);
     this.groups = createRecord(data['raw']['item-group'], Group);
     this.recipes = createRecord(data['raw']['recipe'], Recipe);
+    this.techs = createRecord(data['raw']['technology'], Tech);
     this.locale = data['locale'];
   }
 

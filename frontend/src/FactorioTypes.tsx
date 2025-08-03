@@ -148,6 +148,19 @@ export class CraftingMachine extends Entity {
 export class MiningDrill extends Entity {
 }
 
+export class Tech extends Base {
+  // ingredients: ItemWithCount[];
+  prerequisites: Set<string>;
+  // recipes: string[];
+
+  constructor(data: FactorioData, json: any) {
+    super(data, json);
+  //   this.ingredients = rawToItemList(data, json.ingredients);
+    this.prerequisites = new Set(json.prerequisites) || [];
+  //   this.recipes = json.recipes.map((recipe: any) => data.recipes[recipe]);
+  }
+}
+
 export class Lab extends Entity {
   researching_speed: number;
   inputs: string[];
@@ -244,9 +257,6 @@ export class Recipe extends Base {
   crafting_category: string;
 
   constructor(data: FactorioData, json: any) {
-    if (json.name === 'express-transport-belt') {
-      console.log(json);
-    }
     if ('normal' in json) {
       Object.assign(json, json.normal);
     }
