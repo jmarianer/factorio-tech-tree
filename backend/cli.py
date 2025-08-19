@@ -2,8 +2,7 @@ import click
 import json
 from pathlib import Path
 from factorio_data import ModReader, get_factorio_data
-from utils import write_animation, sanitize_floats
-from icon import get_factorio_icon, get_icon_specs
+from utils import write_animation, write_icon, sanitize_floats
 import concurrent.futures
 
 @click.group()
@@ -26,9 +25,7 @@ def generate_icon(
     object_data: dict
 ) -> None:
     if 'icon' in object_data or 'icons' in object_data:
-        icon_spec = get_icon_specs(object_data)
-        icon = get_factorio_icon(data_reader, icon_spec)
-        icon.save(output_path / 'icons' / type_name / f'{name}.png')
+        write_icon(output_path / 'icons' / type_name / f'{name}.png', object_data, data_reader)
 
 def generate_assembling_machine_animation(
     data_reader: ModReader,

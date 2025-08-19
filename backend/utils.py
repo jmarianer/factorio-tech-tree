@@ -5,6 +5,7 @@ from lupa.lua52 import LuaRuntime
 from typing import Any
 from PIL.Image import Image
 from pathlib import Path
+from icon import get_factorio_icon, get_icon_specs
 from mod_reader import ModReader
 from animation import get_animation, get_animation_specs
 import math
@@ -74,6 +75,12 @@ def parse_dependencies(dependency_spec: str) -> tuple[str, str, str]:
         return match['prefix'], match['mod'], match['rest']
     else:
         raise
+
+
+def write_icon(filename: Path, object: Any, data_reader: ModReader) -> None:
+    icon_spec = get_icon_specs(object)
+    icon = get_factorio_icon(data_reader, icon_spec)
+    icon.save(filename)
 
 
 def write_animation(filename: Path, animation_data: Any, data_reader: ModReader) -> None:
