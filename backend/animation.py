@@ -28,6 +28,16 @@ class Layer(NamedTuple):
         y_end = y_start + self.height * self.scale
         return int(x_start), int(y_start), int(x_end), int(y_end)
 
+    def get_stripe(self, frame_no: int) -> dict[str, Any]:
+        assert self.stripes is not None
+        for stripe in self.stripes:
+            stripe_frame_count = stripe['width_in_frames'] * stripe['height_in_frames']
+            if frame_no >= stripe_frame_count:
+                frame_no -= stripe_frame_count
+            else:
+                return stripe
+        raise ValueError()
+
     def get_image(self, reader: ModReader, frame_no: int) -> Image.Image:
         frame_no = self.frame_sequence[frame_no] - 1
         if self.filename:
@@ -35,14 +45,7 @@ class Layer(NamedTuple):
             row = frame_no // self.line_length
             col = frame_no % self.line_length
         else:
-            assert self.stripes is not None
-            for stripe in self.stripes:
-                stripe_frame_count = stripe['width_in_frames'] * stripe['height_in_frames']
-                if frame_no >= stripe_frame_count:
-                    frame_no -= stripe_frame_count
-                else:
-                    break
-
+            stripe = self.get_stripe(frame_no)
             raw = reader.get_image(stripe['filename'], self.blend_mode != 'additive')
             row = frame_no // stripe['width_in_frames']
             col = frame_no % stripe['width_in_frames']

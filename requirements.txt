@@ -1,9 +1,8 @@
 jinja2
-git+https://github.com/jmarianer/lupa.git#egg=lupa
-Pillow
+lupa
+git+https://github.com/python-pillow/Pillow.git@9f5d1f71a02da17061ce5acec1f1adf81913aaf0#egg=Pillow
 click
 mypy
-types-Pillow
 pycodestyle
 bbcode
 MarkupSafe

@@ -47,17 +47,8 @@ def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
 
         if icon_layer.tint is not None:
             tint = icon_layer.tint
-
-            layer_new_data = map(
-                    lambda data: (
-                        int(data[0] * tint.r),
-                        int(data[1] * tint.g),
-                        int(data[2] * tint.b),
-                        int(data[3] * tint.a)),
-                    layer.getdata())
-
-            # TODO Not sure but I think the type of layer.putdata is just wrong in the stub.
-            layer.putdata(list(layer_new_data))  # type: ignore
+            layer_new_data = [(int(data[0] * tint.r), int(data[1] * tint.g), int(data[2] * tint.b), int(data[3] * tint.a)) for data in layer.getdata()]
+            layer.putdata(layer_new_data)
 
         shift_x, shift_y = icon_layer.shift
         default_offset = (icon_size - layer_scaled_size) / 2

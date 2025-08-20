@@ -2,26 +2,25 @@ import base64
 import io
 import re
 from lupa.lua52 import LuaRuntime
-from typing import Any
+from typing import Any, cast
 from PIL.Image import Image
 from pathlib import Path
 from icon import get_factorio_icon, get_icon_specs
 from mod_reader import ModReader
 from animation import get_animation, get_animation_specs
+from icon import get_factorio_icon
 import math
 
-# TODO: Figure out if this can be done more elegantly
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from lupa.lua52 import LuaObject
-else:
-    LuaObject = int
+
+LuaObject = Any
 
 
-def sanitize_floats(obj):
+def sanitize_floats(obj: Any) -> Any:
     if isinstance(obj, dict):
+        obj = cast(dict[Any, Any], obj)
         return {k: sanitize_floats(v) for k, v in obj.items()}
     elif isinstance(obj, list):
+        obj = cast(list[Any], obj)
         return [sanitize_floats(item) for item in obj]
     elif isinstance(obj, float):
         if math.isinf(obj):
@@ -43,10 +42,12 @@ def lua_table_to_python(obj: LuaObject) -> Any:
 
 def python_to_lua_table(lua: LuaRuntime, obj: Any) -> LuaObject:
     if isinstance(obj, dict):
+        obj = cast(dict[Any, Any], obj)
         return lua.table(**{
             k: python_to_lua_table(lua, v)
             for k, v in obj.items()})
     elif isinstance(obj, list):
+        obj = cast(list[Any], obj)
         return lua.table(*[
             python_to_lua_table(lua, v)
             for v in obj])

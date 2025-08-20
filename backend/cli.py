@@ -1,3 +1,4 @@
+from typing import Any
 import click
 import json
 from pathlib import Path
@@ -10,7 +11,7 @@ def cli() -> None:
     pass
 
 
-def get_nested_value(obj, *keys):
+def get_nested_value(obj: Any, *keys: str):
     """Navigate through nested dict by checking each key in sequence."""
     for key in keys:
         if key in obj:
@@ -22,7 +23,7 @@ def generate_icon(
     output_path: Path,
     type_name: str,
     name: str,
-    object_data: dict
+    object_data: dict[Any, Any]
 ) -> None:
     if 'icon' in object_data or 'icons' in object_data:
         write_icon(output_path / 'icons' / type_name / f'{name}.png', object_data, data_reader)
@@ -32,10 +33,10 @@ def generate_assembling_machine_animation(
     output_path: Path,
     type_name: str,
     name: str,
-    object_data: dict
+    object_data: dict[Any, Any]
 ) -> None:
-    animation_data = []
-    def add_animation_data(animation):
+    animation_data: list[Any] = []
+    def add_animation_data(animation: Any):
         if 'layers' in animation:
             animation_data.extend(animation['layers'])
         else:
@@ -58,9 +59,9 @@ def generate_mining_drill_animation(
     output_path: Path,
     type_name: str,
     name: str,
-    object_data: dict
+    object_data: dict[Any, Any]
 ) -> None:
-    animation_data = []
+    animation_data: list[Any] = []
     if 'animation' in object_data:
         animation_data.extend(get_nested_value(object_data['animation'], 'north', 'layers'))
     graphics_set = object_data.get('graphics_set', {})
@@ -84,7 +85,7 @@ def generate_lab_animation(
     output_path: Path,
     type_name: str,
     name: str,
-    object_data: dict
+    object_data: dict[Any, Any]
 ) -> None:
     animation_data = (
         get_nested_value(object_data.get('on_animation', []), 'north', 'layers')
@@ -113,7 +114,7 @@ def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, 
         (output / 'icons' / type_name).mkdir(parents=True, exist_ok=True)
         (output / 'animations' / type_name).mkdir(parents=True, exist_ok=True)
 
-    futures = []
+    futures: list[concurrent.futures.Future[None]] = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
         for type_name, objects in data['raw'].items():
             for name, object_data in objects.items():

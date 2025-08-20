@@ -24,7 +24,7 @@ def _populate_mod_list(reader: ModReader, mods: set[str]) -> tuple[list[str], di
             reader.add_mod(mod)
             mod_info[mod] = json.loads(reader.get_text(f'__{mod}__/info.json'))
 
-            required_dependencies = []
+            required_dependencies: list[str] = []
             load_order_constraints[mod] = []
             for dependency_spec in mod_info[mod].get('dependencies', []):
                 prefix, dep, _ = parse_dependencies(dependency_spec)

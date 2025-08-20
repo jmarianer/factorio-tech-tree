@@ -31,6 +31,6 @@ npm start
 ## Linting and type checking
 
 ```
-mypy . --strict
-pycodestyle *.py* lupa/ --max-line-length 120
+npx pyright backend
+pycodestyle backend --max-line-length 120
 ```
