@@ -1,0 +1,44 @@
+{
+    "angelbobs": {
+      "name": "Angel's and Bob's Mods",
+      "mods": [
+        "SpaceMod",
+        "angelsaddons-storage",
+        "angelsbioprocessing",
+        "angelspetrochem",
+        "angelsrefining",
+        "angelssmelting",
+        "bobassembly",
+        "bobelectronics",
+        "bobenemies",
+        "bobequipment",
+        "bobinserters",
+        "boblibrary",
+        "boblogistics",
+        "bobmining",
+        "bobmodules",
+        "bobores",
+        "bobplates",
+        "bobpower",
+        "bobrevamp",
+        "bobtech",
+        "bobwarfare"
+      ]
+    },
+    "base": {
+        "name": "Base",
+        "mods": []
+    },
+    "ind": {
+        "name": "Industrial Revolution",
+        "mods": ["IndustrialRevolution"]
+    },
+    "k2spacex": {
+        "name": "Space Exploration + Krastorio 2",
+        "mods": ["space-exploration", "space-exploration-postprocess", "Krastorio2"]
+    },
+    "spacex": {
+        "name": "Space Exploration",
+        "mods": ["space-exploration", "space-exploration-postprocess"]
+    }
+}

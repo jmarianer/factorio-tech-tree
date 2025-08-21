@@ -17,7 +17,7 @@ pip install -r requirements.txt
 export FACTORIO_BASE='/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data'
 export FACTORIO_USERNAME=you
 export FACTORIO_TOKEN=12345  # from player-data.json
-./test.sh
+python backend/cli.py dump-data -q --output frontend/public/generated config.json
 ```
 
 ## Run frontend

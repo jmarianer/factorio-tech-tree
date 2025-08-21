@@ -99,35 +99,42 @@ def generate_lab_animation(
 @click.option('--factorio-base', envvar='FACTORIO_BASE', type=click.Path(file_okay=False, dir_okay=True, path_type=Path))
 @click.option('--factorio-username', envvar='FACTORIO_USERNAME')
 @click.option('--factorio-token', envvar='FACTORIO_TOKEN')
-@click.option('--mods', multiple=True)
 @click.option('--output', type=click.Path(file_okay=False, dir_okay=True, path_type=Path))
 @click.option('-q', '--quiet', is_flag=True)
+@click.argument('config_file', type=click.Path(file_okay=True, dir_okay=False, path_type=Path))
 def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, factorio_token: str,
-              mods: list[str], output: Path, quiet: bool) -> None:
-    data, reader = get_factorio_data(factorio_base, mod_cache_dir, mods, factorio_username, factorio_token, quiet)
+              output: Path, quiet: bool, config_file: Path) -> None:
+    with open(config_file) as f:
+        config = json.load(f)
 
-    with open(output / 'data.json', 'w') as f:
-        f.write(json.dumps(sanitize_floats(data), sort_keys=True, indent=4))
-
-    # Create all icon and animation directories
-    for type_name, objects in data['raw'].items():
-        (output / 'icons' / type_name).mkdir(parents=True, exist_ok=True)
-        (output / 'animations' / type_name).mkdir(parents=True, exist_ok=True)
-
-    futures: list[concurrent.futures.Future[None]] = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        for type_name, objects in data['raw'].items():
-            for name, object_data in objects.items():
-                futures.append(executor.submit(generate_icon, reader, output, type_name, name, object_data))
-                if type_name in ['assembling-machine', 'crafting-machine', 'rocket-silo', 'furnace']:
-                    futures.append(executor.submit(generate_assembling_machine_animation, reader, output, type_name, name, object_data))
-                if type_name == 'lab':
-                    futures.append(executor.submit(generate_lab_animation, reader, output, type_name, name, object_data))
-                if type_name == 'mining-drill':
-                    futures.append(executor.submit(generate_mining_drill_animation, reader, output, type_name, name, object_data))
+        futures: list[concurrent.futures.Future[None]] = []
+        for regime, c in config.items():
+            (output / regime).mkdir(parents=True, exist_ok=True)
+            data, reader = get_factorio_data(factorio_base, mod_cache_dir, c["mods"], factorio_username, factorio_token, quiet)
 
-    for future in concurrent.futures.as_completed(futures):
-        future.result()
+            with open(output / regime / 'data.json', 'w') as f:
+                f.write(json.dumps(sanitize_floats(data), sort_keys=True, indent=4))
+
+            # Create all icon and animation directories
+            for type_name, objects in data['raw'].items():
+                (output / regime / 'icons' / type_name).mkdir(parents=True, exist_ok=True)
+                (output / regime / 'animations' / type_name).mkdir(parents=True, exist_ok=True)
+
+            for type_name, objects in data['raw'].items():
+                for name, object_data in objects.items():
+                    futures.append(executor.submit(generate_icon, reader, output / regime, type_name, name, object_data))
+                    if type_name in ['assembling-machine', 'crafting-machine', 'rocket-silo', 'furnace']:
+                        futures.append(executor.submit(generate_assembling_machine_animation, reader, output / regime, type_name, name, object_data))
+                    if type_name == 'lab':
+                        futures.append(executor.submit(generate_lab_animation, reader, output / regime, type_name, name, object_data))
+                    if type_name == 'mining-drill':
+                        futures.append(executor.submit(generate_mining_drill_animation, reader, output / regime, type_name, name, object_data))
+
+        concurrent.futures.wait(futures)
+
+    with open(output / 'config.json', 'w') as f:
+        f.write(json.dumps(config, sort_keys=True, indent=4))
 
 
 if __name__ == '__main__':
