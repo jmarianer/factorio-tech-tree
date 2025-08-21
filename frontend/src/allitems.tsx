@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
 import { ItemIcon } from './Elements';
 
-export default function Home() {
+export default function AllItems() {
   const { regime } = useParams();
   const data = useData();
   const [selectedGroup, setSelectedGroup] = useState<string | null>(() => {

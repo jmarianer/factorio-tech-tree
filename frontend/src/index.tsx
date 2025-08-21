@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { DataProvider } from './DataContext';
-import Home from './home';
+import AllItems from './allitems';
 import Item from './item';
 import Entity from './entity';
 import Recipe from './recipe';
@@ -36,7 +36,7 @@ function ListRegimes() {
 function RegimeLayout() {
   return <DataProvider>
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<AllItems />} />
       <Route path="/tech" element={<TechTree />} />
       <Route path="/recipe/:name" element={<Recipe />} />
       <Route path="/item/:name" element={<Item />} />
