@@ -18,7 +18,7 @@ export function DataProvider({ path, children, fn }: { path: string; children: R
     };
 
     loadData();
-  }, [path]);
+  }, [path, fn]);
 
   if (loading) {
     return <div>Loading...</div>;

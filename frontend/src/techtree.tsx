@@ -20,8 +20,9 @@ export function TechTree() {
 
   let y = 0;
   while (true) {
+    // eslint-disable-next-line no-loop-func -- (Known false positives with array functions)
     const nextLayer = Array.from(techsRemaining).filter(tech =>
-      // @ts-ignore
+      // @ts-ignore  (isSubsetOf is new enough that TS has problems with it)
       techs[tech].prerequisites.isSubsetOf(techsDone)
     )
     if (nextLayer.length === 0) {

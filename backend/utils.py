@@ -8,7 +8,6 @@ from pathlib import Path
 from icon import get_factorio_icon, get_icon_specs
 from mod_reader import ModReader
 from animation import get_animation, get_animation_specs
-from icon import get_factorio_icon
 import math
 
 
