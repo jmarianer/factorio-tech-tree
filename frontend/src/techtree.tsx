@@ -2,13 +2,14 @@ import { useParams } from "react-router-dom";
 import { useData } from './DataContext';
 import { Dialog } from "./Dialog";
 import { Tech } from './FactorioTypes';
+import { FactorioData } from './FactorioData';
 
 const LAYER_HEIGHT = 300;
 const LAYER_WIDTH = 250;
 // NOTE: there are more hard-coded numbers later down. :(
 
 export function TechTree() {
-  const { techs } = useData();
+  const { techs } = useData<FactorioData>();
   const { regime } = useParams();
 
   const nodes: Record<string, {tech: Tech, x: number, y: number}> = {};

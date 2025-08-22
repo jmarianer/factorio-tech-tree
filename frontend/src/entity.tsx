@@ -4,9 +4,10 @@ import { BBCode } from "./BBCode";
 import { Dialog } from "./Dialog";
 import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType, MiningDrill as MiningDrillType } from "./FactorioTypes";
 import { ItemIcon, RenderRecipe } from "./Elements";
+import { FactorioData } from './FactorioData';
 
 function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
-  const data = useData();
+  const data = useData<FactorioData>();
   const { regime } = useParams();
   return <>
     <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
@@ -26,7 +27,7 @@ function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
 } 
 
 function Lab({ entity }: { entity: LabType }) {
-  const data = useData();
+  const data = useData<FactorioData>();
   const { regime } = useParams();
   return <>
     <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
@@ -71,7 +72,7 @@ function Turret({ entity }: { entity: TurretType }) {
 
 export default function Entity() {
   const { regime, name } = useParams();
-  const data = useData();
+  const data = useData<FactorioData>();
   const entity = data.entities[name!];
   return Dialog(`Entity: ${entity.name}`,
     <>

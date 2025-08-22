@@ -4,10 +4,11 @@ import _ from 'lodash';
 import { useParams } from 'react-router-dom';
 import { Dialog } from './Dialog';
 import { ItemIcon } from './Elements';
+import { FactorioData } from './FactorioData';
 
 export default function AllItems() {
   const { regime } = useParams();
-  const data = useData();
+  const data = useData<FactorioData>();
   const [selectedGroup, setSelectedGroup] = useState<string | null>(() => {
     return window.location.hash.slice(1) || null;
   });

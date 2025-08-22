@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { DataProvider } from './DataContext';
+import { BrowserRouter as Router, Routes, Route, Link, useParams } from 'react-router-dom';
+import { DataProvider, useData } from './DataContext';
 import AllItems from './allitems';
 import Item from './item';
 import Entity from './entity';
@@ -9,6 +9,7 @@ import Recipe from './recipe';
 import './factorio.css';
 import { TechTree } from './techtree';
 import { Dialog } from './Dialog';
+import { FactorioData } from './FactorioData';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -23,10 +24,11 @@ const regimes = [
 ];
 
 function ListRegimes() {
+  const config = useData<Record<string, { name: string }>>();
   return Dialog('Select a regime',
     <></>,
     <div>
-      {regimes.map(([regime, name]) => (
+      {Object.entries(config).map(([regime, { name }]) => (
         <Link className="regime" key={regime} to={`/${regime}`}>{name}</Link>
       ))}
     </div>
@@ -34,7 +36,8 @@ function ListRegimes() {
 }
 
 function RegimeLayout() {
-  return <DataProvider>
+  const { regime } = useParams();
+  return <DataProvider path={`/generated/${regime}/data.json`} fn={data => new FactorioData(data)}>
     <Routes>
       <Route path="/" element={<AllItems />} />
       <Route path="/tech" element={<TechTree />} />
@@ -49,7 +52,7 @@ root.render(
   <React.StrictMode>
     <Router>
       <Routes>
-        <Route path="/" element={<ListRegimes />} />
+        <Route path="/" element={<DataProvider path="/generated/config.json"><ListRegimes /></DataProvider>} />
         <Route path="/:regime/*" element={<RegimeLayout />} />
       </Routes>
     </Router>

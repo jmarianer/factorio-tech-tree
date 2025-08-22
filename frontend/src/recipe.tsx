@@ -4,6 +4,7 @@ import { Dialog } from "./Dialog";
 import { BBCode } from "./BBCode";
 import { ItemWithCount } from './FactorioTypes';
 import { ItemIcon } from "./Elements";
+import { FactorioData } from './FactorioData';
 
 function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }) {
   return (
@@ -17,7 +18,7 @@ function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }
 
 export default function Recipe() {
   const { regime, name } = useParams();
-  const data = useData();
+  const data = useData<FactorioData>();
   const recipe = data.recipes[name!];
   return Dialog(`Recipe: ${recipe.name}`,
     <>

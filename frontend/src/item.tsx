@@ -4,6 +4,7 @@ import { useData } from './DataContext';
 import { ItemWithCount } from './FactorioTypes';
 import { ItemIcon, RenderRecipe } from './Elements';
 import { BBCode } from './BBCode';
+import { FactorioData } from './FactorioData';
 
 export function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWithCount }) {
   return (
@@ -16,7 +17,7 @@ export function RenderItemWithCount({ itemWithCount }: { itemWithCount: ItemWith
 
 export default function Item() {
   const { regime, name } = useParams();
-  const data = useData();
+  const data = useData<FactorioData>();
   const item = data.items[name!];
 
   return Dialog(`Item: ${item.localized_title('en')}`,
