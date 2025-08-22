@@ -25,13 +25,14 @@ const regimes = [
 
 function ListRegimes() {
   const config = useData<Record<string, { name: string }>>();
-  return Dialog('Select a regime',
-    <></>,
-    <div>
-      {Object.entries(config).map(([regime, { name }]) => (
-        <Link className="regime" key={regime} to={`/${regime}`}>{name}</Link>
-      ))}
-    </div>
+  return (
+    <DataProvider path="/generated/config.json">
+      <Dialog title='Select a regime'>
+        {Object.entries(config).map(([regime, { name }]) => (
+          <Link className="regime" key={regime} to={`/${regime}`}>{name}</Link>
+        ))}
+      </Dialog>
+    </DataProvider>
   );
 }
 
@@ -51,7 +52,7 @@ root.render(
   <React.StrictMode>
     <Router>
       <Routes>
-        <Route path="/" element={<DataProvider path="/generated/config.json"><ListRegimes /></DataProvider>} />
+        <Route path="/" element={<ListRegimes />} />
         <Route path="/:regime" element={<RegimeHeader />}>
           <Route index element={<AllItems />} />
           <Route path="tech" element={<TechTree />} />

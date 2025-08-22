@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
-import { Dialog } from "./Dialog";
+import { Dialog, DialogHeader } from "./Dialog";
 import { BBCode } from "./BBCode";
 import { ItemWithCount } from './FactorioTypes';
 import { ItemIcon } from "./Elements";
@@ -20,13 +20,13 @@ export default function Recipe() {
   const { regime, name } = useParams();
   const data = useData<FactorioData>();
   const recipe = data.recipes[name!];
-  return Dialog(`Recipe: ${recipe.name}`,
-    <>
+  return <Dialog title={`Recipe: ${recipe.name}`}>
+    <DialogHeader>
       <img src={`/generated/${regime}/icons/${recipe.type}/${recipe.name}.png`} alt={recipe.name} />
       <div className="description">
         <BBCode code={recipe.description('en')} />
       </div>
-    </>,
+    </DialogHeader>
     <div style={{ display: "flex", justifyContent: "space-between" }}>
       <div>
         <h2>Inputs</h2>
@@ -54,5 +54,5 @@ export default function Recipe() {
         ))}
       </div>
     </div>
-  );
+  </Dialog>
 }

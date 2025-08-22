@@ -1,15 +1,38 @@
-import React from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 
-export function Dialog(title: string, header: React.ReactNode, content: React.ReactNode): React.ReactElement {
-  return <div className="main-dialog">
-    <h1>{title}</h1>
-    <div className="dialog-wrapper">
-      <div className="dialog-header">
+export function DialogHeader({ children }: { children: ReactNode }) {
+  return <div className="dialog-header">{children}</div>;
+}
+
+interface DialogProps {
+  title: string;
+  children: ReactNode;
+}
+
+export function Dialog({ title, children }: DialogProps): ReactElement {
+  let header: ReactNode = null;
+  const content: ReactNode[] = [];
+
+  React.Children.forEach(children, child => {
+    if (
+      React.isValidElement(child) &&
+      child.type === DialogHeader
+    ) {
+      header = child;
+    } else if (child !== null && child !== undefined) {
+      content.push(child);
+    }
+  });
+
+  return (
+    <div className="main-dialog">
+      <h1>{title}</h1>
+      <div className="dialog-wrapper">
         {header}
-      </div>
-      <div className="dialog-content">
-        {content}
+        <div className="dialog-content">
+          {content}
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }

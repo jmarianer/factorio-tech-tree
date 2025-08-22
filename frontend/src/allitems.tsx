@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useData } from './DataContext';
 import _ from 'lodash';
 import { useParams } from 'react-router-dom';
-import { Dialog } from './Dialog';
+import { Dialog, DialogHeader } from './Dialog';
 import { ItemIcon } from './Elements';
 import { FactorioData } from './FactorioData';
 
@@ -34,8 +34,8 @@ export default function AllItems() {
     setSelectedGroup(groups[0].name);
   }
 
-  return Dialog('All items',
-    <>
+  return <Dialog title='All items'>
+    <DialogHeader>
       {groups.map((group) => (
         <div className="group-container" key={group.name}>
           <h2 className="group" onClick={() => setSelectedGroup(group.name)}>
@@ -44,14 +44,13 @@ export default function AllItems() {
           </h2>
         </div>
       ))}
-    </>,
-    <>
-      {selectedGroup && grouped_items.get(selectedGroup).map((subgroup) => <div key={subgroup[0].name}>
-          {_(subgroup)
-            .orderBy((item) => item.order)
-            .value()
-            .map((item) => <ItemIcon key={item.name} item={item} />)}
-          <br />
-      </div>)}
-    </>);
+    </DialogHeader>
+    {selectedGroup && grouped_items.get(selectedGroup).map((subgroup) => <div key={subgroup[0].name}>
+        {_(subgroup)
+          .orderBy((item) => item.order)
+          .value()
+          .map((item) => <ItemIcon key={item.name} item={item} />)}
+        <br />
+    </div>)}
+  </Dialog>
 }

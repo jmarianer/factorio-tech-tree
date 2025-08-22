@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
 import { BBCode } from "./BBCode";
-import { Dialog } from "./Dialog";
+import { Dialog, DialogHeader } from "./Dialog";
 import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType, MiningDrill as MiningDrillType } from "./FactorioTypes";
 import { ItemIcon, RenderRecipe } from "./Elements";
 import { FactorioData } from './FactorioData';
@@ -74,16 +74,16 @@ export default function Entity() {
   const { regime, name } = useParams();
   const data = useData<FactorioData>();
   const entity = data.entities[name!];
-  return Dialog(`Entity: ${entity.name}`,
-    <>
+  return <Dialog title={`Entity: ${entity.name}`}>
+    <DialogHeader>
       <img src={`/generated/${regime}/icons/${entity.type}/${entity.name}.png`} alt={entity.name} />
       <div className="description">
         <BBCode code={entity.description('en')} />
       </div>
-    </>,
-    entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> :
+    </DialogHeader>
+    {entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> :
     entity instanceof LabType ? <Lab entity={entity} /> :
     entity instanceof MiningDrillType ? <MiningDrill entity={entity} /> :
-    entity instanceof TurretType ? <Turret entity={entity} /> : null
-  );
+    entity instanceof TurretType ? <Turret entity={entity} /> : null}
+  </Dialog>
 }

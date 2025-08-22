@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useData } from './DataContext';
-import { Dialog } from "./Dialog";
+import { Dialog, DialogHeader } from "./Dialog";
 import { Tech } from './FactorioTypes';
 import { FactorioData } from './FactorioData';
 
@@ -65,8 +65,10 @@ export function TechTree() {
     );
   };
 
-  return Dialog('Tech tree',
-    <div>All {Object.keys(nodes).length} available technologies</div>,
+  return <Dialog title='Tech tree'>
+    <DialogHeader>
+      All {Object.keys(nodes).length} available technologies
+    </DialogHeader>
     <div style={{ position: 'relative', overflow: 'auto', height: y * LAYER_HEIGHT }}>
       <svg style={{ position: 'absolute', overflow: 'visible' }}>
         {edges.map(([from, to]) => {
@@ -90,5 +92,5 @@ export function TechTree() {
       </svg>
       {Object.values(nodes).map(node => <TechNode tech={node.tech} x={node.x} y={node.y} key={node.tech.name} />)}
     </div>
-  );
+  </Dialog>
 }
