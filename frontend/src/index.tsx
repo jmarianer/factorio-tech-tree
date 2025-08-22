@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route, Link, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useParams, Outlet } from 'react-router-dom';
 import { DataProvider, useData } from './DataContext';
 import AllItems from './allitems';
 import Item from './item';
@@ -35,17 +35,16 @@ function ListRegimes() {
   );
 }
 
-function RegimeLayout() {
+function RegimeHeader() {
   const { regime } = useParams();
-  return <DataProvider path={`/generated/${regime}/data.json`} fn={data => new FactorioData(data)}>
-    <Routes>
-      <Route path="/" element={<AllItems />} />
-      <Route path="/tech" element={<TechTree />} />
-      <Route path="/recipe/:name" element={<Recipe />} />
-      <Route path="/item/:name" element={<Item />} />
-      <Route path="/entity/:name" element={<Entity />} />
-    </Routes>
-  </DataProvider>;
+  return (
+    <DataProvider path={`/generated/${regime}/data.json`} fn={data => new FactorioData(data)}>
+      <div className='navbar'>
+        Regime: { regime } | <a href={`/${regime}`}>All items</a> | <a href={`/${regime}/tech`}>Tech</a>
+      </div>
+      <Outlet />
+    </DataProvider>
+  );
 }
 
 root.render(
@@ -53,7 +52,13 @@ root.render(
     <Router>
       <Routes>
         <Route path="/" element={<DataProvider path="/generated/config.json"><ListRegimes /></DataProvider>} />
-        <Route path="/:regime/*" element={<RegimeLayout />} />
+        <Route path="/:regime" element={<RegimeHeader />}>
+          <Route index element={<AllItems />} />
+          <Route path="tech" element={<TechTree />} />
+          <Route path="recipe/:name" element={<Recipe />} />
+          <Route path="item/:name" element={<Item />} />
+          <Route path="entity/:name" element={<Entity />} />
+        </Route>
       </Routes>
     </Router>
   </React.StrictMode>

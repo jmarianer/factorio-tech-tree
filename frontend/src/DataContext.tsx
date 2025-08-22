@@ -1,5 +1,4 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useParams } from 'react-router-dom';
 
 const DataContext = createContext<any>(null);
 

@@ -2,7 +2,8 @@ body {
     font-family: 'Titillium Web', sans-serif;
     color: white;
     background: url(background.jpeg);
-    padding-top: 10px;
+    padding: 0;
+    margin: 0;
 }
 
 div.main-dialog {
@@ -11,6 +12,7 @@ div.main-dialog {
     border-image-width: 4px;
     max-width: 1060px;
     margin: auto;
+    margin-top: 3ex;
     padding: 8px;
 }
 
@@ -186,4 +188,16 @@ a.item {
 .regime {
     display: block;
     color: #d2d2d2;
+}
+
+.navbar {
+    padding: 1ex;
+    background-color: #414040;
+    color: #ffe6c0;
+    font-weight: bold;
+}
+
+.navbar a {
+    text-decoration: none;
+    color: #ffe6c0;
 }
