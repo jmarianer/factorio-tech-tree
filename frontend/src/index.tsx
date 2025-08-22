@@ -41,7 +41,7 @@ function RegimeHeader() {
   return (
     <DataProvider path={`/generated/${regime}/data.json`} fn={data => new FactorioData(data)}>
       <div className='navbar'>
-        Regime: { regime } | <a href={`/${regime}`}>All items</a> | <a href={`/${regime}/tech`}>Tech</a>
+        Regime: { regime } | <Link to={`/${regime}`}>All items</Link> | <Link to={`/${regime}/tech`}>Tech</Link>
       </div>
       <Outlet />
     </DataProvider>
