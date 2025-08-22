@@ -18,16 +18,6 @@ def get_nested_value(obj: Any, *keys: str):
             obj = obj[key]
     return obj
 
-def generate_icon(
-    data_reader: ModReader,
-    output_path: Path,
-    type_name: str,
-    name: str,
-    object_data: dict[Any, Any]
-) -> None:
-    if 'icon' in object_data or 'icons' in object_data:
-        write_icon(output_path / 'icons' / type_name / f'{name}.png', object_data, data_reader)
-
 def generate_assembling_machine_animation(
     data_reader: ModReader,
     output_path: Path,
@@ -123,7 +113,8 @@ def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, 
 
             for type_name, objects in data['raw'].items():
                 for name, object_data in objects.items():
-                    futures.append(executor.submit(generate_icon, reader, output / regime, type_name, name, object_data))
+                    if 'icon' in object_data or 'icons' in object_data:
+                        futures.append(executor.submit(write_icon, output / regime / 'icons' / type_name / f'{name}.png', object_data, reader))
                     if type_name in ['assembling-machine', 'crafting-machine', 'rocket-silo', 'furnace']:
                         futures.append(executor.submit(generate_assembling_machine_animation, reader, output / regime, type_name, name, object_data))
                     if type_name == 'lab':
