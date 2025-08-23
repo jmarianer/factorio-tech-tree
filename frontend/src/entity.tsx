@@ -10,8 +10,16 @@ function CraftingMachine({ entity }: { entity: CraftingMachineType }) {
   const data = useData<FactorioData>();
   const { regime } = useParams();
   return <>
-    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
-    Crafting speed: {entity.crafting_speed} <br />
+    {["north", "east", "south", "west"].map((dir) => (
+      // TODO dedup
+      <span key={dir}>
+        <img
+          src={`/generated/${regime}/animations/${entity.type}/${entity.name}/${dir}.webp`}
+          alt={dir.charAt(0).toUpperCase() + dir.slice(1)}
+        />
+        <br />
+      </span>
+    ))}    Crafting speed: {entity.crafting_speed} <br />
     <h2>Crafting</h2>
     {entity.crafting_categories.map((category) => (
       <div key={category}>
@@ -30,7 +38,8 @@ function Lab({ entity }: { entity: LabType }) {
   const data = useData<FactorioData>();
   const { regime } = useParams();
   return <>
-    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
+    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/on.webp`} alt="On" /><br />
+    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/off.webp`} alt="Off" /><br />
     Research speed: {entity.researching_speed} <br />
     Inputs: {entity.inputs.map((input) => (
       <ItemIcon key={input} item={data.items[input]} />
@@ -39,10 +48,17 @@ function Lab({ entity }: { entity: LabType }) {
 } 
 
 function MiningDrill({ entity }: { entity: MiningDrillType }) {
-  // const data = useData();
   const { regime } = useParams();
   return <>
-    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}.webp`} alt={entity.name} /><br />
+    {["north", "east", "south", "west"].map((dir) => (
+      <span key={dir}>
+        <img
+          src={`/generated/${regime}/animations/${entity.type}/${entity.name}/${dir}.webp`}
+          alt={dir.charAt(0).toUpperCase() + dir.slice(1)}
+        />
+        <br />
+      </span>
+    ))}
   </>;
 }
 
