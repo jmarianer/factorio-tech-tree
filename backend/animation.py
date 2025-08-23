@@ -132,6 +132,9 @@ def get_layers(spec: list[Any]) -> Generator[Layer, None, None]:
 
 
 def get_layers_from_sprite4way(spec: Any, direction: str) -> list[Layer]:
+    # TODO implement
+    # See http://localhost:3000/angelbobs/entity/sea-pump-placeable
+    # See http://localhost:3000/base/entity/pumpjack
     return []
 
 
@@ -182,8 +185,5 @@ def get_animation_specs(object: Any) -> dict[str, list[Layer]]:
                     for workingvis in graphics_set.get('working_visualisations', [])
                 ],
             })
-
-    if type == 'rocket-silo':
-        pass
 
     return {k: list(get_layers([vv for vv in v if vv])) for k, v in specs.items()}
