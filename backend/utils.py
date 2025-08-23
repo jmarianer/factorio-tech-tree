@@ -5,9 +5,9 @@ from lupa.lua52 import LuaRuntime
 from typing import Any, cast
 from PIL.Image import Image
 from pathlib import Path
-from icon import get_factorio_icon, get_icon_specs
+from icon import IconSpec, get_factorio_icon
 from mod_reader import ModReader
-from animation import get_animation, get_animation_specs
+from animation import get_animation, Layer
 import math
 
 
@@ -77,16 +77,13 @@ def parse_dependencies(dependency_spec: str) -> tuple[str, str, str]:
         raise
 
 
-def write_icon(filename: Path, object: Any, data_reader: ModReader) -> None:
-    icon_spec = get_icon_specs(object)
+def write_icon(filename: Path, icon_spec: IconSpec, data_reader: ModReader) -> None:
     icon = get_factorio_icon(data_reader, icon_spec)
     icon.save(filename)
 
 
-def write_animation(filename: Path, animation_data: list[Any], data_reader: ModReader) -> None:
-    animation_spec = list(get_animation_specs([a for a in animation_data if a is not None]))
-    if len(animation_spec) != 0:
-        animation = get_animation(data_reader, animation_spec)
-        image_iter = iter(animation)
-        first_image = next(image_iter)
-        first_image.save(filename, save_all=True, append_images=image_iter, optimize=True)
+def write_animation(filename: Path, animation_spec: list[Layer], data_reader: ModReader) -> None:
+    animation = get_animation(data_reader, animation_spec)
+    image_iter = iter(animation)
+    first_image = next(image_iter)
+    first_image.save(filename, save_all=True, append_images=image_iter, optimize=True)

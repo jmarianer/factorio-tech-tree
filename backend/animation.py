@@ -101,10 +101,10 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
     return
 
 
-def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
+def get_layers(spec: list[Any]) -> Generator[Layer, None, None]:
     for s in spec:
         if 'layers' in s:
-            yield from get_animation_specs(s['layers'])
+            yield from get_layers(s['layers'])
         else:
             s.update(s.get('hr_version', {}))
             run_mode = s.get('run_mode', 'forward')
@@ -129,3 +129,61 @@ def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
                 stripes=s.get('stripes', None),
                 blend_mode=s.get('blend_mode', 'normal'),
                 frame_sequence=frame_sequence)
+
+
+def get_layers_from_sprite4way(spec: Any, direction: str) -> list[Layer]:
+    return []
+
+
+def get_animation_specs(object: Any) -> dict[str, list[Layer]]:
+    def fetch_from_4way(animation4way: Any, direction: str):
+        if 'north' not in animation4way:
+            return animation4way
+        if direction not in animation4way:
+            return animation4way['north']
+        return animation4way[direction]
+
+    def fetch_from_workingvis(workingvis: Any, direction: str):
+        if 'animation' in workingvis:
+            return workingvis['animation']
+        return workingvis.get(f'{direction}_animation', {})
+
+    type = object['type']
+
+    specs = {}
+    if type == 'lab':
+        specs = {
+            'on': [object['on_animation']],
+            'off': [object['off_animation']],
+        }
+    if type in ['assembling-machine', 'crafting-machine', 'furnace']:
+        for dir in ['north', 'south', 'east', 'west']:
+            specs.update({
+                dir: [
+                    # TODO always_draw_idle_animation
+                    fetch_from_4way(object.get('animation', {}), dir),
+                ] + [
+                    fetch_from_workingvis(workingvis, dir)
+                    for workingvis in object.get('working_visualisations', [])
+                ],
+            })
+
+    if type == 'mining-drill':
+        graphics_set = object.get('graphics_set', {})
+        for dir in ['north', 'south', 'east', 'west']:
+            specs.update({
+                dir: [
+                    get_layers_from_sprite4way(object.get('base_picture', {}), dir),
+                    fetch_from_4way(object.get('animations', {}), dir),
+                    fetch_from_4way(graphics_set.get('animation', {}), dir),
+                    fetch_from_4way(graphics_set.get('idle_animation', {}), dir),
+                ] + [
+                    fetch_from_workingvis(workingvis, dir)
+                    for workingvis in graphics_set.get('working_visualisations', [])
+                ],
+            })
+
+    if type == 'rocket-silo':
+        pass
+
+    return {k: list(get_layers([vv for vv in v if vv])) for k, v in specs.items()}

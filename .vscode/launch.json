@@ -28,6 +28,21 @@
                 "config.json"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Generate animation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "backend/cli.py",
+            "args": [
+                "generate-animation",
+                "config.json",
+                "base",
+                "assembling-machine",
+                "chemical-plant",
+                "--output=temp"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }
