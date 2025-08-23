@@ -83,9 +83,10 @@ def write_icon(filename: Path, object: Any, data_reader: ModReader) -> None:
     icon.save(filename)
 
 
-def write_animation(filename: Path, animation_data: Any, data_reader: ModReader) -> None:
-    animation_spec = get_animation_specs(animation_data)
-    animation = get_animation(data_reader, animation_spec)
-    image_iter = iter(animation)
-    first_image = next(image_iter)
-    first_image.save(filename, save_all=True, append_images=image_iter, optimize=True)
+def write_animation(filename: Path, animation_data: list[Any], data_reader: ModReader) -> None:
+    animation_spec = list(get_animation_specs([a for a in animation_data if a is not None]))
+    if len(animation_spec) != 0:
+        animation = get_animation(data_reader, animation_spec)
+        image_iter = iter(animation)
+        first_image = next(image_iter)
+        first_image.save(filename, save_all=True, append_images=image_iter, optimize=True)

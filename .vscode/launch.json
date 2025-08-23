@@ -1,7 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-
         {
             "name": "Base",
             "type": "debugpy",
@@ -11,14 +10,13 @@
                 "dump-data",
                 "-q",
                 "--output",
-                "frontend/public/generated/base",
-                "--factorio-base",
-                "/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data"
+                "frontend/public/generated",
+                "config-base-only.json"
             ],
             "console": "integratedTerminal"
         },
         {
-            "name": "Spacex",
+            "name": "All",
             "type": "debugpy",
             "request": "launch",
             "program": "backend/cli.py",
@@ -26,13 +24,8 @@
                 "dump-data",
                 "-q",
                 "--output",
-                "frontend/public/generated/spacex",
-                "--factorio-base",
-                "/Users/joeym/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data",
-                "--mods",
-                "space-exploration",
-                "--mods",
-                "space-exploration-postprocess"
+                "frontend/public/generated",
+                "config.json"
             ],
             "console": "integratedTerminal"
         }

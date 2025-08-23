@@ -104,7 +104,7 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
 def get_animation_specs(spec: Any) -> Generator[Layer, None, None]:
     for s in spec:
         if 'layers' in s:
-            yield from get_animation_specs(s)
+            yield from get_animation_specs(s['layers'])
         else:
             s.update(s.get('hr_version', {}))
             run_mode = s.get('run_mode', 'forward')

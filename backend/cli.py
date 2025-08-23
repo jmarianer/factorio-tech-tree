@@ -14,9 +14,11 @@ def cli() -> None:
 def get_nested_value(obj: Any, *keys: str):
     """Navigate through nested dict by checking each key in sequence."""
     for key in keys:
-        if key in obj:
-            obj = obj[key]
+        if key not in obj:
+            return None
+        obj = obj[key]
     return obj
+
 
 def generate_assembling_machine_animation(
     data_reader: ModReader,
@@ -25,24 +27,15 @@ def generate_assembling_machine_animation(
     name: str,
     object_data: dict[Any, Any]
 ) -> None:
-    animation_data: list[Any] = []
-    def add_animation_data(animation: Any):
-        if 'layers' in animation:
-            animation_data.extend(animation['layers'])
-        else:
-            animation_data.append(animation)
+    animation_data: list[Any] = [
+        get_nested_value(object_data, 'animation', 'north'),
+        get_nested_value(object_data, 'idle_animation', 'north')]
+    for s in object_data.get('working_visualisations', []):
+        if 'animation' in s:
+            animation_data.append(s['animation'])
 
-    if 'animation' in object_data:
-        add_animation_data(get_nested_value(object_data['animation'], 'north'))
-    if 'idle_animation' in object_data:
-        add_animation_data(get_nested_value(object_data['idle_animation'], 'north'))
-    if 'working_visualisations' in object_data:
-        for s in object_data['working_visualisations']:
-            if 'animation' in s:
-                add_animation_data(s['animation'])
+    write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
 
-    if animation_data:
-        write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
 
 def generate_mining_drill_animation(
     data_reader: ModReader,
@@ -51,24 +44,21 @@ def generate_mining_drill_animation(
     name: str,
     object_data: dict[Any, Any]
 ) -> None:
-    animation_data: list[Any] = []
-    if 'animation' in object_data:
-        animation_data.extend(get_nested_value(object_data['animation'], 'north', 'layers'))
     graphics_set = object_data.get('graphics_set', {})
-    if 'animation' in graphics_set:
-        animation_data.extend(get_nested_value(graphics_set['animation'], 'north', 'layers'))
-    if 'idle_animation' in graphics_set:
-        animation_data.extend(get_nested_value(graphics_set['idle_animation'], 'north', 'layers'))
+    # TODO: base_picture (4waysprite)
+    animation_data: list[Any] = [
+        get_nested_value(object_data, 'base_picture', 'north'),
+        get_nested_value(object_data, 'animations', 'north'),
+        get_nested_value(graphics_set, 'animation', 'north'),
+        get_nested_value(graphics_set, 'idle_animation', 'north'),
+    ]
     if 'working_visualisations' in graphics_set:
         for s in graphics_set['working_visualisations']:
             animation = s.get('animation', s.get('north_animation', {}))
             if animation:
-                if 'layers' in animation:
-                    animation_data.extend(animation['layers'])
-                else:
-                    animation_data.append(animation)
-    if animation_data:
-        write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
+                animation_data.append(animation)
+
+    write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
 
 def generate_lab_animation(
     data_reader: ModReader,
@@ -77,12 +67,10 @@ def generate_lab_animation(
     name: str,
     object_data: dict[Any, Any]
 ) -> None:
-    animation_data = (
-        get_nested_value(object_data.get('on_animation', []), 'north', 'layers')
-    )
-    
-    if animation_data:
-        write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
+    animation_data = [
+        get_nested_value(object_data, 'on_animation', 'north')
+    ]
+    write_animation(output_path / 'animations' / type_name / f'{name}.webp', animation_data, data_reader)
 
 @cli.command()
 @click.option('--mod-cache-dir', default='mod_cache', type=click.Path(file_okay=False, dir_okay=True, path_type=Path))
@@ -115,7 +103,8 @@ def dump_data(mod_cache_dir: Path, factorio_base: Path, factorio_username: str, 
                 for name, object_data in objects.items():
                     if 'icon' in object_data or 'icons' in object_data:
                         futures.append(executor.submit(write_icon, output / regime / 'icons' / type_name / f'{name}.png', object_data, reader))
-                    if type_name in ['assembling-machine', 'crafting-machine', 'rocket-silo', 'furnace']:
+                    # TODO rocket-silo
+                    if type_name in ['assembling-machine', 'crafting-machine', 'furnace']:
                         futures.append(executor.submit(generate_assembling_machine_animation, reader, output / regime, type_name, name, object_data))
                     if type_name == 'lab':
                         futures.append(executor.submit(generate_lab_animation, reader, output / regime, type_name, name, object_data))
