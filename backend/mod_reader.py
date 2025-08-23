@@ -54,9 +54,9 @@ class ModReader:
                     shutil.copyfileobj(source, target)
 
     def get_text(self, a_path: str) -> str:
-        return self.get_binary(a_path).decode('utf-8')
+        return self._get_binary(a_path).decode('utf-8')
 
-    def get_binary(self, a_path: str) -> bytes:
+    def _get_binary(self, a_path: str) -> bytes:
         match = re.match('__(.*)__/(.*)', a_path)
         if not match:
             raise
@@ -82,7 +82,7 @@ class ModReader:
     @cache
     def get_image(self, path: str, alpha: bool = True) -> Image.Image:
         image = Image \
-            .open(io.BytesIO(self.get_binary(path))) \
+            .open(io.BytesIO(self._get_binary(path))) \
             .convert('RGBA')
         if not alpha:
             r, g, b, _ = image.split()

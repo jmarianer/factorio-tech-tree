@@ -1,4 +1,3 @@
-import io
 from typing import Any, Optional, NamedTuple
 from PIL import Image
 
@@ -28,7 +27,7 @@ class IconSpec(NamedTuple):
 def get_factorio_icon(reader: ModReader, icon_spec: IconSpec) -> Image.Image:
     icon_size = icon_spec.size
     if icon_size is None:
-        return Image.open(io.BytesIO(reader.get_binary(icon_spec.layers[0].icon_path)))
+        return reader.get_image(icon_spec.layers[0].icon_path)
 
     icon = Image.new(mode='RGBA', size=(icon_size, icon_size))
     x1: Optional[float] = None
