@@ -73,7 +73,6 @@ def generate_animation(
         config = json.load(f)
     data, reader = get_factorio_data(factorio_base, mod_cache_dir, config[regime]["mods"], factorio_username, factorio_token, quiet)
     object = data['raw'][type][name]
-    print(json.dumps(object, sort_keys=True, indent=4))
     for name, value in get_animation_specs(object).items():
         write_animation(output / f'{name}.webp', value, reader)
 

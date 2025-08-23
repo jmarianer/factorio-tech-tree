@@ -1,11 +1,14 @@
+from dataclasses import dataclass
+import itertools
 import math
-from typing import Any, Generator, Iterable, NamedTuple, Optional
+from typing import Any, Generator, Iterable, Optional
 from PIL import Image, ImageChops
 
 from mod_reader import ModReader
 
 
-class Layer(NamedTuple):
+@dataclass
+class Layer():
     height: int
     width: int
     x: int
@@ -101,34 +104,42 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
     return
 
 
-def get_layers(spec: list[Any]) -> Generator[Layer, None, None]:
-    for s in spec:
-        if 'layers' in s:
-            yield from get_layers(s['layers'])
-        else:
-            s.update(s.get('hr_version', {}))
-            run_mode = s.get('run_mode', 'forward')
-            frame_sequence = s.get('frame_sequence', list(range(1, s.get('frame_count', 1) + 1)))
-            if run_mode == 'forward-then-backward':
-                frame_sequence = frame_sequence + frame_sequence[-2:0:-1]
-            elif run_mode == 'backward':
-                frame_sequence = frame_sequence[::-1]
+def get_layers(spec: Any) -> list[Layer]:
+    if 'layers' in spec:
+        return list(itertools.chain.from_iterable(get_layers(s) for s in spec['layers']))
 
-            yield Layer(
-                height=s['height'],
-                width=s['width'],
-                x=s.get('x', 0),
-                y=s.get('y', 0),
-                line_length=s.get('line_length', 1),
-                scale=s.get('scale', 1),
-                shift=s.get('shift', (0, 0)),
-                draw_as_glow=s.get('draw_as_glow', False),
-                draw_as_light=s.get('draw_as_light', False),
-                draw_as_shadow=s.get('draw_as_shadow', False),
-                filename=s.get('filename', None),
-                stripes=s.get('stripes', None),
-                blend_mode=s.get('blend_mode', 'normal'),
-                frame_sequence=frame_sequence)
+    spec.update(spec.get('hr_version', {}))
+    run_mode = spec.get('run_mode', 'forward')
+    frame_sequence = spec.get('frame_sequence', list(range(1, spec.get('frame_count', 1) + 1)))
+    if run_mode == 'forward-then-backward':
+        frame_sequence = frame_sequence + frame_sequence[-2:0:-1]
+    elif run_mode == 'backward':
+        frame_sequence = frame_sequence[::-1]
+
+    return [Layer(
+        height=spec['height'],
+        width=spec['width'],
+        x=spec.get('x', 0),
+        y=spec.get('y', 0),
+        line_length=spec.get('line_length', 1),
+        scale=spec.get('scale', 1),
+        shift=spec.get('shift', (0, 0)),
+        draw_as_glow=spec.get('draw_as_glow', False),
+        draw_as_light=spec.get('draw_as_light', False),
+        draw_as_shadow=spec.get('draw_as_shadow', False),
+        filename=spec.get('filename', None),
+        stripes=spec.get('stripes', None),
+        blend_mode=spec.get('blend_mode', 'normal'),
+        frame_sequence=frame_sequence)]
+
+
+def get_layers_2way(spec: Any) -> list[Layer]:
+    layers = get_layers(spec)
+    frame_count = math.lcm(*(len(l.frame_sequence) for l in layers))
+    for l in layers:
+        l.frame_sequence = l.frame_sequence * (frame_count // len(l.frame_sequence))
+        l.frame_sequence = l.frame_sequence + list(reversed(l.frame_sequence))
+    return layers
 
 
 def get_layers_from_sprite4way(spec: Any, direction: str) -> list[Layer]:
@@ -139,51 +150,75 @@ def get_layers_from_sprite4way(spec: Any, direction: str) -> list[Layer]:
 
 
 def get_animation_specs(object: Any) -> dict[str, list[Layer]]:
-    def fetch_from_4way(animation4way: Any, direction: str):
+    def fetch_from_4way(animation4way: Any, direction: str) -> list[Layer]:
         if 'north' not in animation4way:
-            return animation4way
+            return get_layers(animation4way)
         if direction not in animation4way:
-            return animation4way['north']
-        return animation4way[direction]
+            return get_layers(animation4way['north'])
+        return get_layers(animation4way[direction])
 
-    def fetch_from_workingvis(workingvis: Any, direction: str):
+    def fetch_from_workingvis(workingvis: Any, direction: str) -> list[Layer]:
         if 'animation' in workingvis:
-            return workingvis['animation']
-        return workingvis.get(f'{direction}_animation', {})
+            return get_layers(workingvis['animation'])
+        return get_layers(workingvis.get(f'{direction}_animation', {}))
 
     type = object['type']
 
-    specs = {}
+    specs: dict[str, list[Layer]] = {}
     if type == 'lab':
         specs = {
-            'on': [object['on_animation']],
-            'off': [object['off_animation']],
+            'on': get_layers(object['on_animation']),
+            'off': get_layers(object['off_animation']),
         }
+
     if type in ['assembling-machine', 'crafting-machine', 'furnace']:
         for dir in ['north', 'south', 'east', 'west']:
             specs.update({
-                dir: [
-                    # TODO always_draw_idle_animation
-                    fetch_from_4way(object.get('animation', {}), dir),
-                ] + [
-                    fetch_from_workingvis(workingvis, dir)
-                    for workingvis in object.get('working_visualisations', [])
-                ],
+                # TODO always_draw_idle_animation
+                dir: (
+                    fetch_from_4way(object.get('animation', {}), dir) +
+                    list(itertools.chain.from_iterable(
+                        fetch_from_workingvis(workingvis, dir)
+                        for workingvis in object.get('working_visualisations', [])
+                    ))
+                ),
             })
 
     if type == 'mining-drill':
         graphics_set = object.get('graphics_set', {})
         for dir in ['north', 'south', 'east', 'west']:
             specs.update({
-                dir: [
-                    get_layers_from_sprite4way(object.get('base_picture', {}), dir),
-                    fetch_from_4way(object.get('animations', {}), dir),
-                    fetch_from_4way(graphics_set.get('animation', {}), dir),
-                    fetch_from_4way(graphics_set.get('idle_animation', {}), dir),
-                ] + [
-                    fetch_from_workingvis(workingvis, dir)
-                    for workingvis in graphics_set.get('working_visualisations', [])
-                ],
+                dir: (
+                    get_layers_from_sprite4way(object.get('base_picture', {}), dir) +
+                    fetch_from_4way(object.get('animations', {}), dir) +
+                    fetch_from_4way(graphics_set.get('animation', {}), dir) +
+                    fetch_from_4way(graphics_set.get('idle_animation', {}), dir) +
+                    list(itertools.chain.from_iterable(
+                        fetch_from_workingvis(workingvis, dir)
+                        for workingvis in graphics_set.get('working_visualisations', [])
+                    ))
+                ),
             })
 
-    return {k: list(get_layers([vv for vv in v if vv])) for k, v in specs.items()}
+    if type == 'rocket-silo':
+        specs = {
+            'closed': (
+                get_layers(object['shadow_sprite']) +
+                get_layers(object['hole_sprite']) +
+                get_layers(object['door_front_sprite']) +
+                get_layers(object['door_back_sprite']) +
+                get_layers(object['base_day_sprite']) +
+                get_layers(object['base_front_sprite'])
+            ),
+            'open': (
+                get_layers(object['shadow_sprite']) +
+                get_layers(object['hole_sprite']) +
+                get_layers(object['base_day_sprite']) +
+                get_layers(object['base_front_sprite']) +
+                get_layers_2way(object['arm_01_back_animation']) +
+                get_layers_2way(object['arm_02_right_animation']) +
+                get_layers_2way(object['arm_03_front_animation'])
+            ),
+        }
+
+    return specs
