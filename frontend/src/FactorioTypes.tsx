@@ -145,6 +145,9 @@ export class CraftingMachine extends Entity {
   }
 }
 
+export class RocketSilo extends CraftingMachine {
+}
+
 export class MiningDrill extends Entity {
 }
 

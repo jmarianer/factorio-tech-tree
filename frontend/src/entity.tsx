@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
 import { BBCode } from "./BBCode";
 import { Dialog, DialogHeader } from "./Dialog";
-import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType, MiningDrill as MiningDrillType } from "./FactorioTypes";
+import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType, MiningDrill as MiningDrillType, RocketSilo as RocketSiloType } from "./FactorioTypes";
 import { ItemIcon, RenderRecipe } from "./Elements";
 import { FactorioData } from './FactorioData';
 
@@ -62,6 +62,14 @@ function MiningDrill({ entity }: { entity: MiningDrillType }) {
   </>;
 }
 
+function RocketSilo({ entity }: { entity: RocketSiloType }) {
+  const { regime } = useParams();
+  return <>
+    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/closed.webp`} alt="Closed" /><br />
+    <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/open.webp`} alt="Open" /><br />
+  </>;
+}
+
 function Turret({ entity }: { entity: TurretType }) {
   // TODO deuglify
   const attackParams = entity.json['attack_parameters'];
@@ -97,7 +105,8 @@ export default function Entity() {
         <BBCode code={entity.description('en')} />
       </div>
     </DialogHeader>
-    {entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> :
+    {entity instanceof RocketSiloType ? <RocketSilo entity={entity} /> :
+    entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> :
     entity instanceof LabType ? <Lab entity={entity} /> :
     entity instanceof MiningDrillType ? <MiningDrill entity={entity} /> :
     entity instanceof TurretType ? <Turret entity={entity} /> : null}

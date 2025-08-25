@@ -105,6 +105,9 @@ def get_animation(reader: ModReader, spec: Iterable[Layer]) -> Generator[Image.I
 
 
 def get_layers(spec: Any) -> list[Layer]:
+    if not spec:
+        return []
+
     if 'layers' in spec:
         return list(itertools.chain.from_iterable(get_layers(s) for s in spec['layers']))
 

@@ -1,4 +1,4 @@
-import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill, Tech } from './FactorioTypes';
+import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill, Tech, RocketSilo } from './FactorioTypes';
 import { all_items } from './superclass';
 import _ from 'lodash';
 
@@ -32,7 +32,7 @@ const all_entities = {
   'infinity-container': Entity,
   'crafting-machine': CraftingMachine,
   'assembling-machine': CraftingMachine,
-  'rocket-silo': CraftingMachine,
+  'rocket-silo': RocketSilo,
   'furnace': CraftingMachine,
   'electric-energy-interface': Entity,
   'electric-pole': Entity,
