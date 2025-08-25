@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import itertools
 import math
-from typing import Any, Generator, Iterable, Optional
+from typing import Any, Generator, Iterable, Optional, cast
 from PIL import Image, ImageChops
 
 from mod_reader import ModReader
@@ -146,10 +146,20 @@ def get_layers_2way(spec: Any) -> list[Layer]:
 
 
 def get_layers_from_sprite4way(spec: Any, direction: str) -> list[Layer]:
-    # TODO implement
-    # See http://localhost:3000/angelbobs/entity/sea-pump-placeable
-    # See http://localhost:3000/base/entity/pumpjack
-    return []
+    if not spec:
+        return []
+
+    if 'sheets' in spec:
+        return list(itertools.chain.from_iterable(get_layers(layer) for layer in spec['sheets']))
+
+    sprite = spec.get(direction) or spec.get('north')
+    if not sprite:
+        return []
+
+    if isinstance(sprite, list):
+        return list(itertools.chain.from_iterable(get_layers(s) for s in cast(list[Any], sprite)))
+    else:
+        return get_layers(sprite)
 
 
 def get_animation_specs(object: Any) -> dict[str, list[Layer]]:
