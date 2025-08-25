@@ -136,6 +136,38 @@ def get_layers(spec: Any) -> list[Layer]:
         frame_sequence=frame_sequence)]
 
 
+def get_layers_from_rotated_animation(spec: Any, index: int) -> list[Layer]:
+    if not spec:
+        return []
+
+    if 'layers' in spec:
+        return list(itertools.chain.from_iterable(get_layers(layer) for layer in spec['layers']))
+
+    spec.update(spec.get('hr_version', {}))
+    run_mode = spec.get('run_mode', 'forward')
+    frame_count = spec.get('frame_count', 1)
+    frame_sequence = spec.get('frame_sequence', list(range(frame_count * (index - 1) + 1, frame_count * index + 1)))
+    if run_mode == 'forward-then-backward':
+        frame_sequence = frame_sequence + frame_sequence[-2:0:-1]
+    elif run_mode == 'backward':
+        frame_sequence = frame_sequence[::-1]
+
+    return [Layer(
+        height=spec['height'],
+        width=spec['width'],
+        x=spec.get('x', 0),
+        y=spec.get('y', 0),
+        line_length=spec.get('line_length', frame_count),
+        scale=spec.get('scale', 1),
+        shift=spec.get('shift', (0, 0)),
+        draw_as_glow=spec.get('draw_as_glow', False),
+        draw_as_light=spec.get('draw_as_light', False),
+        draw_as_shadow=spec.get('draw_as_shadow', False),
+        filename=spec.get('filename', None),
+        stripes=spec.get('stripes', None),
+        blend_mode=spec.get('blend_mode', 'normal'),
+        frame_sequence=frame_sequence)]
+
 def get_layers_2way(spec: Any) -> list[Layer]:
     layers = get_layers(spec)
     frame_count = math.lcm(*(len(l.frame_sequence) for l in layers))
@@ -232,6 +264,36 @@ def get_animation_specs(object: Any) -> dict[str, list[Layer]]:
                 get_layers_2way(object['arm_02_right_animation']) +
                 get_layers_2way(object['arm_03_front_animation'])
             ),
+        }
+
+    if type == 'transport-belt':
+        # Assume there's a belt_animation_set. There are other ways to specify animations in Factorio but none of my test modules use them.
+        belt_animation_set = object['belt_animation_set']
+        default_indexes = {
+            'east': 1,
+            'west': 2,
+            'north': 3,
+            'south': 4,
+            'east_to_north': 5,
+            'north_to_east': 6,
+            'west_to_north': 7,
+            'north_to_west': 8,
+            'south_to_east': 9,
+            'east_to_south': 10,
+            'south_to_west': 11,
+            'west_to_south': 12,
+            'starting_south': 13,
+            'ending_south': 14,
+            'starting_west': 15,
+            'ending_west': 16,
+            'starting_north': 17,
+            'ending_north': 18,
+            'starting_east': 19,
+            'ending_east': 20,
+        }
+        specs = {
+            dir: get_layers_from_rotated_animation(belt_animation_set['animation_set'], belt_animation_set.get(f'{dir}_index', idx))
+            for dir, idx in default_indexes.items()
         }
 
     return specs
