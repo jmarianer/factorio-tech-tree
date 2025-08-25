@@ -151,6 +151,15 @@ export class RocketSilo extends CraftingMachine {
 export class MiningDrill extends Entity {
 }
 
+export class TransportBelt extends Entity {
+  speed: number;
+
+  constructor(data: FactorioData, json: any) {
+    super(data, json);
+    this.speed = json.speed || 0;
+  }
+}
+
 export class Tech extends Base {
   // ingredients: ItemWithCount[];
   prerequisites: Set<string>;

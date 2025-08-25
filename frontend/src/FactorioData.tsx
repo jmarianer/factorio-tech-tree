@@ -1,4 +1,4 @@
-import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill, Tech, RocketSilo } from './FactorioTypes';
+import { Entity, Item, Subgroup, Group, Recipe, Base, CraftingMachine, Turret, Lab, MiningDrill, Tech, RocketSilo, TransportBelt } from './FactorioTypes';
 import { all_items } from './superclass';
 import _ from 'lodash';
 
@@ -75,12 +75,12 @@ const all_entities = {
   'solar-panel': Entity,
   'storage-tank': Entity,
   'train-stop': Entity,
-  'transport-belt-connectable': Entity,
+  'transport-belt-connectable': TransportBelt,
   'linked-belt': Entity,
   'loader-1x1': Entity,
   'loader': Entity,
   'splitter': Entity,
-  'transport-belt': Entity,
+  'transport-belt': TransportBelt,
   'underground-belt': Entity,
   'turret': Turret,
   'ammo-turret': Turret,

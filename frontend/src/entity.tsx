@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useData } from "./DataContext";
 import { BBCode } from "./BBCode";
 import { Dialog, DialogHeader } from "./Dialog";
-import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType, MiningDrill as MiningDrillType, RocketSilo as RocketSiloType } from "./FactorioTypes";
+import { CraftingMachine as CraftingMachineType, Turret as TurretType, Lab as LabType, MiningDrill as MiningDrillType, RocketSilo as RocketSiloType, TransportBelt as TransportBeltType } from "./FactorioTypes";
 import { ItemIcon, RenderRecipe } from "./Elements";
 import { FactorioData } from './FactorioData';
 
@@ -94,11 +94,45 @@ function Turret({ entity }: { entity: TurretType }) {
   </>;
 }
 
+function TransportBelt({ entity }: { entity: TransportBeltType }) {
+  const { regime } = useParams();
+  return <>
+    Speed: {entity.speed} items/s<br />
+    <div style={{ position: 'relative', width: 64, height: 192 }}>
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/starting_west.webp`} style={{ position: 'absolute', top: 32, left: 0 }} alt="|" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/east.webp`} style={{ position: 'absolute', top: 32, left: 32 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/ending_east.webp`} style={{ position: 'absolute', top: 32, left: 64 }} alt="+" />
+
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/starting_south.webp`} style={{ position: 'absolute', top: 64, left: 96 }} alt="|" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/north.webp`} style={{ position: 'absolute', top: 32, left: 96 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/ending_north.webp`} style={{ position: 'absolute', top: 0, left: 96 }} alt="+" />
+
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/starting_north.webp`} style={{ position: 'absolute', top: 0, left: 160 }} alt="|" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/south.webp`} style={{ position: 'absolute', top: 32, left: 160 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/ending_south.webp`} style={{ position: 'absolute', top: 64, left: 160 }} alt="--" />
+
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/starting_east.webp`} style={{ position: 'absolute', top: 32, left: 256 }} alt="|" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/west.webp`} style={{ position: 'absolute', top: 32, left: 224 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/ending_west.webp`} style={{ position: 'absolute', top: 32, left: 192 }} alt="--" />
+
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/south_to_east.webp`} style={{ position: 'absolute', top: 96, left: 32 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/west_to_south.webp`} style={{ position: 'absolute', top: 96, left: 64 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/north_to_west.webp`} style={{ position: 'absolute', top: 128, left: 64 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/east_to_north.webp`} style={{ position: 'absolute', top: 128, left: 32 }} alt="--" />
+
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/north_to_east.webp`} style={{ position: 'absolute', top: 128, left: 128 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/west_to_north.webp`} style={{ position: 'absolute', top: 128, left: 160 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/south_to_west.webp`} style={{ position: 'absolute', top: 96, left: 160 }} alt="--" />
+      <img src={`/generated/${regime}/animations/${entity.type}/${entity.name}/east_to_south.webp`} style={{ position: 'absolute', top: 96, left: 128 }} alt="--" />
+    </div>
+  </>;
+}
+
 export default function Entity() {
   const { regime, name } = useParams();
   const data = useData<FactorioData>();
   const entity = data.entities[name!];
-  return <Dialog title={`Entity: ${entity.name}`}>
+  return <Dialog title={`Entity: ${entity.name} (${entity.type})`}>
     <DialogHeader>
       <img src={`/generated/${regime}/icons/${entity.type}/${entity.name}.png`} alt={entity.name} />
       <div className="description">
@@ -109,6 +143,8 @@ export default function Entity() {
     entity instanceof CraftingMachineType ? <CraftingMachine entity={entity} /> :
     entity instanceof LabType ? <Lab entity={entity} /> :
     entity instanceof MiningDrillType ? <MiningDrill entity={entity} /> :
-    entity instanceof TurretType ? <Turret entity={entity} /> : null}
+    entity instanceof TurretType ? <Turret entity={entity} /> :
+    entity instanceof TransportBeltType ? <TransportBelt entity={entity} /> :
+    null}
   </Dialog>
 }
